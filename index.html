@@ -23,6 +23,85 @@
             touch-action: none;
         }
 
+        /* パスワード画面 */
+        #passwordScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, #C8A882 0%, #A67C52 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+
+        #passwordScreen.hidden {
+            display: none;
+        }
+
+        #passwordBox {
+            background: rgba(255, 248, 230, 0.98);
+            padding: 50px 60px;
+            border-radius: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            text-align: center;
+            border: 3px solid #D2691E;
+        }
+
+        #passwordBox h2 {
+            font-size: 28px;
+            color: #D2691E;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #passwordInput {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 18px;
+            border: 2px solid #D2B48C;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        #passwordInput:focus {
+            border-color: #D2691E;
+        }
+
+        #passwordSubmit {
+            width: 100%;
+            background: linear-gradient(135deg, #FFB347 0%, #FF8C42 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 15px rgba(255, 140, 66, 0.4);
+        }
+
+        #passwordSubmit:hover {
+            transform: translateY(-2px);
+        }
+
+        #passwordSubmit:active {
+            transform: translateY(0);
+        }
+
+        #passwordError {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 10px;
+            min-height: 20px;
+        }
+
         #gameContainer {
             position: relative;
             width: 100vw;
@@ -298,6 +377,16 @@
     </style>
 </head>
 <body>
+    <!-- パスワード認証画面 -->
+    <div id="passwordScreen">
+        <div id="passwordBox">
+            <h2>🔒 パスワードを入力</h2>
+            <input type="password" id="passwordInput" placeholder="パスワード" autocomplete="off">
+            <button id="passwordSubmit">入室</button>
+            <div id="passwordError"></div>
+        </div>
+    </div>
+
     <div id="gameContainer">
         <div id="topPanel">
             <div class="info-bubble">
@@ -331,6 +420,56 @@
     </div>
 
     <script>
+        // ====================
+        // パスワード認証
+        // ====================
+        const PASSWORD = "suika"; // ここでパスワードを設定
+        
+        const passwordScreen = document.getElementById('passwordScreen');
+        const passwordInput = document.getElementById('passwordInput');
+        const passwordSubmit = document.getElementById('passwordSubmit');
+        const passwordError = document.getElementById('passwordError');
+        const gameContainer = document.getElementById('gameContainer');
+        
+        // 初期状態：ゲームを非表示
+        gameContainer.style.display = 'none';
+        
+        // パスワード確認
+        function checkPassword() {
+            const inputPassword = passwordInput.value;
+            
+            if (inputPassword === PASSWORD) {
+                // 正解
+                passwordScreen.classList.add('hidden');
+                gameContainer.style.display = 'flex';
+                initGame(); // ゲーム初期化
+            } else {
+                // 不正解
+                passwordError.textContent = '❌ パスワードが違います';
+                passwordInput.value = '';
+                passwordInput.focus();
+                
+                // エラーメッセージを3秒後に消す
+                setTimeout(() => {
+                    passwordError.textContent = '';
+                }, 3000);
+            }
+        }
+        
+        // ボタンクリック
+        passwordSubmit.addEventListener('click', checkPassword);
+        
+        // Enterキーでも送信
+        passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                checkPassword();
+            }
+        });
+        
+        // ====================
+        // ゲーム本体
+        // ====================
+        
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
@@ -953,11 +1092,15 @@
             document.getElementById('gameOver').style.display = 'none';
         });
         
-        // ゲーム開始
-        nextBallType = getRandomBallType();
-        updateNextPreview();
-        updateScore();
-        gameLoop();
+        // ゲーム初期化関数
+        function initGame() {
+            nextBallType = getRandomBallType();
+            updateNextPreview();
+            updateScore();
+            gameLoop();
+        }
+        
+        // パスワード認証後に initGame() が呼ばれます
     </script>
 </body>
 </html>
