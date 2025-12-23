@@ -275,7 +275,7 @@
             left: 50%;
             transform: translate(-50%, -50%);
             background: rgba(255, 248, 230, 0.98);
-            padding: 40px;
+            padding: 40px 60px;
             border-radius: 30px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.4);
             text-align: center;
@@ -283,26 +283,30 @@
             pointer-events: all;
             border: 3px solid #D2691E;
             z-index: 1000;
+            min-width: 350px;
+            white-space: nowrap;
         }
 
         #gameOver h2 {
-            font-size: 32px;
+            font-size: 28px;
             color: #D2691E;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            white-space: nowrap;
         }
 
         #gameOver p {
             font-size: 18px;
             color: #8B4513;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
+            white-space: nowrap;
         }
 
         #restartBtn {
             background: linear-gradient(135deg, #FFB347 0%, #FF8C42 100%);
             color: white;
             border: none;
-            padding: 15px 40px;
+            padding: 12px 35px;
             border-radius: 30px;
             font-size: 18px;
             font-weight: bold;
@@ -310,6 +314,7 @@
             transition: transform 0.2s;
             box-shadow: 0 4px 15px rgba(255, 140, 66, 0.4);
             text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+            white-space: nowrap;
         }
 
         #restartBtn:active {
@@ -474,10 +479,12 @@
         const WALL_T = 10;
         const GAME_LINE_RATIO = 0.15;
         
-        // 物理エンジン作成
+        // 物理エンジン作成（重力を弱く）
         const engine = Engine.create({
-            constraintIterations: 3,
-            gravity: { x: 0, y: 1 }
+            constraintIterations: 5,
+            positionIterations: 10,
+            velocityIterations: 8,
+            gravity: { x: 0, y: 0.4 }  // 重力を弱く
         });
         
         // レンダラー作成（Matter.jsのデフォルトレンダラーを使用）
@@ -693,9 +700,11 @@
                     
                     const newBall = Bodies.circle(newX, newY, newRadius, {
                         label: 'bubble_' + newLevel,
-                        restitution: 0.3,
-                        friction: 0.3,
-                        density: 0.001,
+                        restitution: 0.2,
+                        friction: 0.5,
+                        frictionAir: 0.01,
+                        density: 0.002,
+                        slop: 0.05,
                         render: {
                             fillStyle: BALL_COLORS[newLevel],
                             sprite: fruitImageObjects[newLevel] ? {
@@ -803,9 +812,11 @@
             currentBall = Bodies.circle(x, 30, radius, {
                 isSleeping: true,
                 label: 'bubble_' + nextBallType,
-                restitution: 0.3,
-                friction: 0.3,
-                density: 0.001,
+                restitution: 0.2,    // 反発を弱く（バウンドしにくい）
+                friction: 0.5,       // 摩擦を強く（転がりにくい）
+                frictionAir: 0.01,   // 空気抵抗
+                density: 0.002,      // 密度を少し上げる
+                slop: 0.05,
                 render: {
                     fillStyle: BALL_COLORS[nextBallType],
                     sprite: fruitImageObjects[nextBallType] ? {
@@ -825,15 +836,15 @@
             Sleeping.set(currentBall, false);
             currentBall = null;
             
+            // 次のネクストを準備
+            nextBallType = getRandomBallType();
+            updateNextPreview();
+            
             // 短いインターバル後に配置可能に
             canPut = false;
             setTimeout(() => {
                 canPut = true;
-                createNewBall(); // 次のボールを表示
-                
-                // 次のボールを準備（createNewBallの後に更新）
-                nextBallType = getRandomBallType();
-                updateNextPreview();
+                createNewBall(); // 新しいnextBallTypeでボールを表示
             }, 100);
         }
     </script>
