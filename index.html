@@ -484,7 +484,7 @@
             constraintIterations: 5,
             positionIterations: 10,
             velocityIterations: 8,
-            gravity: { x: 0, y: 0.4 }  // 重力を弱く
+            gravity: { x: 0, y: 0.28 }  // 重力を0.7倍に
         });
         
         // レンダラー作成（Matter.jsのデフォルトレンダラーを使用）
@@ -567,6 +567,7 @@
         let worldRecord = 10000;
         let nextBallType = 0;
         let currentBall = null;
+        let droppedBall = null; // 落下中のボールを追跡
         let isGameOver = false;
         let canPut = true;
         let mouseX = WIDTH / 2;
@@ -647,6 +648,7 @@
             isGameOver = false;
             canPut = true;
             currentBall = null;
+            droppedBall = null;
             nextBallType = getRandomBallType();
             
             updateScore();
@@ -676,6 +678,17 @@
             for (const pair of pairs) {
                 const { bodyA, bodyB } = pair;
                 
+                // 落下中のボールが何かに触れたら次のボールを出せるようにする
+                if (droppedBall && (bodyA.id === droppedBall.id || bodyB.id === droppedBall.id)) {
+                    droppedBall = null;
+                    
+                    // 短いインターバル後に次のボールを出す
+                    setTimeout(() => {
+                        canPut = true;
+                        createNewBall();
+                    }, 100);
+                }
+                
                 if (!Composite.get(engine.world, bodyA.id, 'body') ||
                     !Composite.get(engine.world, bodyB.id, 'body')) {
                     continue;
@@ -683,6 +696,15 @@
                 
                 if (bodyA.label === bodyB.label && bodyA.label.startsWith('bubble_')) {
                     const currentLevel = Number(bodyA.label.substring(7));
+                    
+                    // 空中で合体しないように：両方のボールの速度が小さい時のみ合体
+                    const speedA = Math.sqrt(bodyA.velocity.x ** 2 + bodyA.velocity.y ** 2);
+                    const speedB = Math.sqrt(bodyB.velocity.x ** 2 + bodyB.velocity.y ** 2);
+                    
+                    // どちらかが速く動いている場合は合体しない（落下中など）
+                    if (speedA > 3 || speedB > 3) {
+                        continue;
+                    }
                     
                     // スコア加算
                     score += Math.pow(2, currentLevel + 1);
@@ -834,18 +856,15 @@
             if (!currentBall) return;
             
             Sleeping.set(currentBall, false);
+            droppedBall = currentBall; // 落下中のボールを記録
             currentBall = null;
             
             // 次のネクストを準備
             nextBallType = getRandomBallType();
             updateNextPreview();
             
-            // 短いインターバル後に配置可能に
+            // ボールが他のボールに触れるまで次を出さない
             canPut = false;
-            setTimeout(() => {
-                canPut = true;
-                createNewBall(); // 新しいnextBallTypeでボールを表示
-            }, 100);
         }
     </script>
 </body>
