@@ -103,6 +103,68 @@
             min-height: 20px;
         }
 
+        /* スタート画面 */
+        #startScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10001;
+        }
+
+        #startScreen.active {
+            display: flex;
+        }
+
+        #startBox {
+            background: rgba(255, 248, 230, 0.98);
+            padding: 60px 80px;
+            border-radius: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            text-align: center;
+            border: 3px solid #D2691E;
+        }
+
+        #startBox h2 {
+            font-size: 36px;
+            color: #D2691E;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #startBox p {
+            font-size: 16px;
+            color: #8B4513;
+            margin-bottom: 30px;
+        }
+
+        #startButton {
+            width: 100%;
+            background: linear-gradient(135deg, #FFB347 0%, #FF8C42 100%);
+            color: white;
+            border: none;
+            padding: 18px 50px;
+            border-radius: 10px;
+            font-size: 22px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 15px rgba(255, 140, 66, 0.4);
+        }
+
+        #startButton:hover {
+            transform: translateY(-2px);
+        }
+
+        #startButton:active {
+            transform: translateY(0);
+        }
+
         #gameContainer {
             position: relative;
             width: 100vw;
@@ -396,6 +458,15 @@
         </div>
     </div>
 
+    <!-- スタート画面 -->
+    <div id="startScreen">
+        <div id="startBox">
+            <h2>🍉 ウォーターメロンゲーム</h2>
+            <p>同じキャラクターを合体させよう！</p>
+            <button id="startButton">ゲーム開始</button>
+        </div>
+    </div>
+
     <div id="gameContainer">
         <div id="topPanel">
             <div class="info-bubble">
@@ -446,6 +517,11 @@
             if (inputPassword === PASSWORD) {
                 passwordScreen.classList.add('hidden');
                 gameContainer.classList.add('active');
+                
+                // スタート画面を表示
+                const startScreen = document.getElementById('startScreen');
+                startScreen.classList.add('active');
+                
                 initGame();
             } else {
                 passwordError.textContent = '❌ パスワードが違います';
@@ -484,7 +560,7 @@
             constraintIterations: 5,
             positionIterations: 10,
             velocityIterations: 8,
-            gravity: { x: 0, y: 0.28 }  // 重力を0.7倍に
+            gravity: { x: 0, y: 0.82 }  // 重力設定
         });
         
         // レンダラー作成（Matter.jsのデフォルトレンダラーを使用）
@@ -569,7 +645,9 @@
         let currentBall = null;
         let droppedBall = null; // 落下中のボールを追跡
         let isGameOver = false;
-        let canPut = true;
+        let canPut = false; // 最初はゲーム開始まで落とせない
+        let gameStarted = false; // ゲームが開始されたか
+        let isTouching = false; // タッチ中かどうか
         let mouseX = WIDTH / 2;
         
         // スコア更新
@@ -646,7 +724,8 @@
             // 状態リセット
             score = 0;
             isGameOver = false;
-            canPut = true;
+            canPut = false; // スタートボタンを押すまで待つ
+            gameStarted = false;
             currentBall = null;
             droppedBall = null;
             nextBallType = getRandomBallType();
@@ -661,6 +740,14 @@
             // イベント登録
             setupEvents();
         }
+        
+        // スタートボタン処理
+        document.getElementById('startButton').addEventListener('click', () => {
+            document.getElementById('startScreen').classList.remove('active');
+            gameStarted = true;
+            canPut = true;
+            createNewBall(); // 最初のボールを表示
+        });
         
         // ====================
         // イベント設定
@@ -696,15 +783,6 @@
                 
                 if (bodyA.label === bodyB.label && bodyA.label.startsWith('bubble_')) {
                     const currentLevel = Number(bodyA.label.substring(7));
-                    
-                    // 空中で合体しないように：両方のボールの速度が小さい時のみ合体
-                    const speedA = Math.sqrt(bodyA.velocity.x ** 2 + bodyA.velocity.y ** 2);
-                    const speedB = Math.sqrt(bodyB.velocity.x ** 2 + bodyB.velocity.y ** 2);
-                    
-                    // どちらかが速く動いている場合は合体しない（落下中など）
-                    if (speedA > 3 || speedB > 3) {
-                        continue;
-                    }
                     
                     // スコア加算
                     score += Math.pow(2, currentLevel + 1);
@@ -800,8 +878,22 @@
             }
         });
         
-        canvas.addEventListener('touchmove', (e) => {
+        // タッチ開始
+        canvas.addEventListener('touchstart', (e) => {
             if (isGameOver || !canPut) return;
+            e.preventDefault();
+            isTouching = true;
+            
+            const rect = canvas.getBoundingClientRect();
+            mouseX = (e.touches[0].clientX - rect.left) * (WIDTH / rect.width);
+            
+            if (!currentBall) {
+                createNewBall();
+            }
+        });
+        
+        canvas.addEventListener('touchmove', (e) => {
+            if (isGameOver || !canPut || !isTouching) return;
             e.preventDefault();
             const rect = canvas.getBoundingClientRect();
             mouseX = (e.touches[0].clientX - rect.left) * (WIDTH / rect.width);
@@ -814,15 +906,12 @@
         });
         
         canvas.addEventListener('touchend', (e) => {
-            if (isGameOver || !canPut) return;
+            if (isGameOver || !canPut || !isTouching) return;
             e.preventDefault();
+            isTouching = false;
             
-            const rect = canvas.getBoundingClientRect();
-            mouseX = (e.changedTouches[0].clientX - rect.left) * (WIDTH / rect.width);
-            
-            if (!currentBall) {
-                createNewBall();
-            } else {
+            // 指を離した瞬間にボールを落とす
+            if (currentBall) {
                 dropBall();
             }
         });
