@@ -825,15 +825,15 @@
             Sleeping.set(currentBall, false);
             currentBall = null;
             
-            // 次のボールを準備
-            nextBallType = getRandomBallType();
-            updateNextPreview();
-            
             // 短いインターバル後に配置可能に
             canPut = false;
             setTimeout(() => {
                 canPut = true;
-                createNewBall(); // 即座に次のボールを表示
+                createNewBall(); // 次のボールを表示
+                
+                // 次のボールを準備（createNewBallの後に更新）
+                nextBallType = getRandomBallType();
+                updateNextPreview();
             }, 100);
         }
     </script>
