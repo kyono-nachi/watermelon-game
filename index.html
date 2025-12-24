@@ -1,0 +1,1661 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ウォーターメロンゲーム</title>
+    <script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Rounded Mplus 1c', 'Arial', sans-serif;
+            background: linear-gradient(180deg, #C8A882 0%, #A67C52 100%);
+            min-height: 100vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        /* パスワード画面 */
+        /* スタート画面 */
+        #startScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10001;
+        }
+
+        #startScreen.active {
+            display: flex;
+        }
+
+        #startBox {
+            background: rgba(255, 248, 230, 0.98);
+            padding: 60px 80px;
+            border-radius: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            text-align: center;
+            border: 3px solid #D2691E;
+        }
+
+        #startBox h2 {
+            font-size: 36px;
+            color: #D2691E;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #startBox p {
+            font-size: 16px;
+            color: #8B4513;
+            margin-bottom: 30px;
+        }
+
+        #startButton {
+            width: 100%;
+            background: linear-gradient(135deg, #FFB347 0%, #FF8C42 100%);
+            color: white;
+            border: none;
+            padding: 18px 50px;
+            border-radius: 10px;
+            font-size: 22px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 15px rgba(255, 140, 66, 0.4);
+        }
+
+        #startButton:hover {
+            transform: translateY(-2px);
+        }
+
+        #startButton:active {
+            transform: translateY(0);
+        }
+
+        /* 難易度選択画面 */
+        #difficultyScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(200, 168, 130, 0.95);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10001;
+        }
+
+        #difficultyScreen.active {
+            display: flex;
+        }
+
+        #difficultyBox {
+            background: rgba(255, 248, 230, 0.98);
+            padding: 50px 60px;
+            border-radius: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            text-align: center;
+            border: 3px solid #D2691E;
+            max-width: 400px;
+        }
+
+        #difficultyBox h2 {
+            font-size: 28px;
+            color: #D2691E;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .difficulty-button {
+            width: 100%;
+            background: linear-gradient(135deg, #FFB347 0%, #FF8C42 100%);
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            border-radius: 10px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 15px rgba(255, 140, 66, 0.4);
+            margin-bottom: 15px;
+        }
+
+        .difficulty-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .difficulty-button:active {
+            transform: translateY(0);
+        }
+
+        .difficulty-button.locked {
+            background: linear-gradient(135deg, #ccc 0%, #999 100%);
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .difficulty-button.locked:hover {
+            transform: none;
+        }
+
+        .difficulty-description {
+            font-size: 14px;
+            color: #8B4513;
+            margin-top: -10px;
+            margin-bottom: 15px;
+        }
+
+        /* Congratulationsウィンドウ */
+        #congratsScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10003;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        #congratsScreen.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        #congratsBox {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            padding: 40px;
+            border-radius: 30px;
+            text-align: center;
+            position: relative;
+            border: 5px solid #FFD700;
+            animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            max-width: 90vw;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); }
+            100% { transform: scale(1); }
+        }
+
+        #congratsBox h1 {
+            font-size: clamp(24px, 8vw, 48px);
+            color: #fff;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+            animation: pulse 1s infinite;
+            white-space: nowrap;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        #congratsFruit {
+            width: clamp(120px, 40vw, 200px);
+            height: clamp(120px, 40vw, 200px);
+            margin: 20px auto;
+            position: relative;
+            animation: float 2s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+        }
+
+        #congratsBonus {
+            font-size: clamp(20px, 6vw, 32px);
+            color: #fff;
+            font-weight: bold;
+            margin: 20px 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        #congratsContinue {
+            font-size: clamp(16px, 4vw, 20px);
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+            transition: transform 0.2s;
+        }
+
+        #congratsContinue:hover {
+            transform: translateY(-2px);
+        }
+
+        #congratsContinue:active {
+            transform: translateY(0);
+        }
+
+        #congratsFruit img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
+        }
+
+        .burst {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 300px;
+            height: 300px;
+            margin: -150px 0 0 -150px;
+            pointer-events: none;
+        }
+
+        .burst::before,
+        .burst::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            animation: burstExpand 0.8s ease-out;
+        }
+
+        .burst::before {
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.8) 0%, transparent 70%);
+        }
+
+        .burst::after {
+            background: radial-gradient(circle, rgba(255, 165, 0, 0.6) 0%, transparent 70%);
+            animation-delay: 0.2s;
+        }
+
+        @keyframes burstExpand {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+        }
+
+        .sparkle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #FFD700;
+            border-radius: 50%;
+            animation: sparkle 1s ease-out forwards;
+        }
+
+        @keyframes sparkle {
+            0% {
+                transform: translate(0, 0) scale(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--tx), var(--ty)) scale(1);
+                opacity: 0;
+            }
+        }
+
+        /* デバッグボタン（控えめ） */
+        #debugButton {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(139, 69, 19, 0.15);
+            color: rgba(139, 69, 19, 0.3);
+            border: 1px solid rgba(139, 69, 19, 0.2);
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            z-index: 100;
+        }
+
+        #debugButton:hover {
+            background: rgba(139, 69, 19, 0.25);
+            color: rgba(139, 69, 19, 0.5);
+        }
+
+        /* デバッグパネル */
+        #debugPanel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 248, 230, 0.98);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            border: 3px solid #D2691E;
+            z-index: 10004;
+            display: none;
+        }
+
+        #debugPanel.active {
+            display: block;
+        }
+
+        #debugPanel h3 {
+            font-size: 18px;
+            color: #D2691E;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        #debugPanel button {
+            width: 100%;
+            background: linear-gradient(135deg, #FFB347 0%, #FF8C42 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            margin: 8px 0;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 10px rgba(255, 140, 66, 0.3);
+        }
+
+        #debugPanel button:hover {
+            transform: translateY(-2px);
+        }
+
+        #debugPanel button:active {
+            transform: translateY(0);
+        }
+
+        #debugClose {
+            background: linear-gradient(135deg, #999 0%, #777 100%) !important;
+            margin-top: 15px;
+        }
+
+        /* デバッグパスワード入力 */
+        #debugPasswordInput {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 2px solid #D2B48C;
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: center;
+            outline: none;
+        }
+
+        #debugPasswordInput:focus {
+            border-color: #D2691E;
+        }
+
+        #debugPasswordError {
+            color: #dc3545;
+            font-size: 12px;
+            text-align: center;
+            margin-top: -10px;
+            margin-bottom: 10px;
+            min-height: 16px;
+        }
+
+        /* 遊び方説明画面 */
+        #howToPlayScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10002;
+        }
+
+        #howToPlayScreen.active {
+            display: flex;
+        }
+
+        #howToPlayBox {
+            background: rgba(255, 248, 230, 0.98);
+            padding: 40px 50px;
+            border-radius: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            text-align: left;
+            border: 3px solid #D2691E;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        #howToPlayBox h2 {
+            font-size: 28px;
+            color: #D2691E;
+            margin-bottom: 20px;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #howToPlayBox h3 {
+            font-size: 20px;
+            color: #D2691E;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        #howToPlayBox p {
+            font-size: 16px;
+            color: #8B4513;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        #howToPlayBox ul {
+            margin: 10px 0 15px 20px;
+            color: #8B4513;
+        }
+
+        #howToPlayBox li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        #closeHowToPlay {
+            width: 100%;
+            background: linear-gradient(135deg, #FFB347 0%, #FF8C42 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 15px rgba(255, 140, 66, 0.4);
+            margin-top: 20px;
+        }
+
+        #closeHowToPlay:hover {
+            transform: translateY(-2px);
+        }
+
+        #closeHowToPlay:active {
+            transform: translateY(0);
+        }
+
+        /* 遊び方ボタン */
+        #howToPlayButton {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 248, 230, 0.95);
+            color: #D2691E;
+            border: 2px solid #D2691E;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+
+        #howToPlayButton:hover {
+            background: #D2691E;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        #howToPlayButton:active {
+            transform: scale(0.95);
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin: 20px auto;
+            min-height: 100vh;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            gap: 8px;
+            box-sizing: border-box;
+        }
+        
+        #gameContainer.active {
+            display: flex;
+        }
+
+        #topPanel {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            width: 100%;
+            max-width: 500px;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        .info-bubble {
+            background: rgba(255, 248, 230, 0.95);
+            border-radius: 50%;
+            width: 100px;
+            height: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(139, 69, 19, 0.3);
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            flex-shrink: 0;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #8B4513;
+            margin-bottom: 3px;
+            font-weight: bold;
+        }
+
+        .info-value {
+            font-size: 22px;
+            font-weight: bold;
+            color: #D2691E;
+        }
+
+        .best-score-label {
+            font-size: 10px;
+            color: #8B4513;
+            opacity: 0.7;
+        }
+
+        #nextBall {
+            background: rgba(255, 248, 230, 0.95);
+            border-radius: 50%;
+            width: 100px;
+            height: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(139, 69, 19, 0.3);
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            flex-shrink: 0;
+        }
+
+        #nextBall h3 {
+            font-size: 12px;
+            color: #8B4513;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        #nextPreview {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        #nextPreview img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        #gameArea {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 500px;
+            gap: 5px;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        #canvasWrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1.1;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #gameCanvas {
+            border-radius: 10px;
+            box-shadow: 
+                0 8px 20px rgba(0,0,0,0.2),
+                inset 0 2px 5px rgba(255,255,255,0.5);
+            border: 3px solid #D2B48C;
+            cursor: pointer;
+            touch-action: none;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        #sinkaBar {
+            position: relative;
+            width: 100%;
+            background: rgba(255, 248, 230, 0.95);
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: 0 4px 15px rgba(139, 69, 19, 0.3);
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            flex-shrink: 1;
+            min-height: 0;
+        }
+
+        #sinkaBar h3 {
+            font-size: 14px;
+            color: #8B4513;
+            text-align: center;
+            margin-bottom: 5px;
+            font-weight: bold;
+            position: relative;
+            z-index: 1;
+        }
+
+        #sinkaBarImage {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: visible;
+        }
+
+        #sinkaBarImage img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        #sinkaBarImage img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .placeholder-text {
+            font-size: 12px;
+            color: #8B4513;
+            opacity: 0.5;
+            text-align: center;
+        }
+
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 248, 230, 0.98);
+            padding: 40px 60px;
+            border-radius: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            text-align: center;
+            display: none;
+            pointer-events: all;
+            border: 3px solid #D2691E;
+            z-index: 1000;
+            min-width: 350px;
+            white-space: nowrap;
+        }
+
+        #gameOver h2 {
+            font-size: 28px;
+            color: #D2691E;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            white-space: nowrap;
+        }
+
+        #gameOver p {
+            font-size: 18px;
+            color: #8B4513;
+            margin-bottom: 25px;
+            white-space: nowrap;
+        }
+
+        #restartBtn {
+            background: linear-gradient(135deg, #FFB347 0%, #FF8C42 100%);
+            color: white;
+            border: none;
+            padding: 12px 35px;
+            border-radius: 30px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 15px rgba(255, 140, 66, 0.4);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+            white-space: nowrap;
+        }
+
+        #restartBtn:active {
+            transform: scale(0.95);
+        }
+
+        .game-line {
+            position: absolute;
+            left: 10px;
+            right: 10px;
+            height: 2px;
+            background: rgba(255, 107, 107, 0.6);
+            pointer-events: none;
+            z-index: 10;
+            border-style: dashed;
+        }
+
+        @media (max-width: 768px) {
+            #gameContainer {
+                padding: 8px;
+                gap: 6px;
+            }
+            
+            #topPanel {
+                gap: 12px;
+            }
+            
+            .info-bubble, #nextBall {
+                width: 85px;
+                height: 85px;
+            }
+            
+            .info-label {
+                font-size: 11px;
+            }
+            
+            .info-value {
+                font-size: 20px;
+            }
+            
+            #nextPreview {
+                width: 50px;
+                height: 50px;
+            }
+            
+            /* シンカの棒を小さく表示 */
+            #sinkaBar {
+                padding: 8px;
+                border-radius: 8px;
+            }
+            
+            #sinkaBar h3 {
+                font-size: 11px;
+                margin-bottom: 5px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #gameContainer {
+                padding: 6px;
+                gap: 5px;
+            }
+            
+            #topPanel {
+                gap: 10px;
+            }
+            
+            .info-bubble, #nextBall {
+                width: 75px;
+                height: 75px;
+            }
+            
+            .info-label, #nextBall h3 {
+                font-size: 10px;
+            }
+            
+            .info-value {
+                font-size: 18px;
+            }
+            
+            .best-score-label {
+                font-size: 8px;
+            }
+            
+            #nextPreview {
+                width: 42px;
+                height: 42px;
+            }
+            
+            /* シンカの棒をさらに小さく表示 */
+            #sinkaBar {
+                padding: 6px;
+                border-radius: 6px;
+            }
+            
+            #sinkaBar h3 {
+                font-size: 10px;
+                margin-bottom: 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Congratulations画面 -->
+    <div id="congratsScreen">
+        <div id="congratsBox">
+            <div class="burst"></div>
+            <h1>🎉 Congratulations! 🎉</h1>
+            <div id="congratsFruit">
+                <img src="images/fruit_10.png" alt="Maximum Fruit">
+            </div>
+            <div id="congratsBonus">ボーナス: +5000点</div>
+            <button id="congratsContinue">ゲームを続ける</button>
+        </div>
+    </div>
+
+    <!-- 遊び方説明画面 -->
+    <div id="howToPlayScreen">
+        <div id="howToPlayBox">
+            <h2>📖 遊び方</h2>
+            
+            <h3>🎯 ゲームの目的</h3>
+            <p>同じキャラクターを合体させて、より大きなキャラクターを作りましょう！</p>
+            
+            <h3>🎮 操作方法</h3>
+            
+            <p><strong>📱 タブレット・スマホの場合：</strong></p>
+            <ul>
+                <li>画面をタップするとボールが出現</li>
+                <li>指を左右に動かしてボールを移動</li>
+                <li>指を離すとボールが落下</li>
+            </ul>
+            
+            <p><strong>🖱️ PCの場合：</strong></p>
+            <ul>
+                <li>マウスを左右に動かしてボールを移動</li>
+                <li>クリックでボールが落下</li>
+            </ul>
+            
+            <h3>✨ ルール</h3>
+            <ul>
+                <li>同じキャラクター同士が触れると合体</li>
+                <li>合体するとスコアが増える</li>
+                <li>赤い線を超えるとゲームオーバー</li>
+            </ul>
+            
+            <button id="closeHowToPlay">閉じる</button>
+        </div>
+    </div>
+
+    <!-- 難易度選択画面 -->
+    <div id="difficultyScreen">
+        <div id="difficultyBox">
+            <h2>⚙️ 難易度を選択</h2>
+            <button class="difficulty-button" id="normalButton">ノーマル</button>
+            <p class="difficulty-description">標準の難易度</p>
+            <button class="difficulty-button" id="easyButton">やさしい</button>
+            <p class="difficulty-description">ボールが0.7倍のサイズ</p>
+        </div>
+    </div>
+
+    <!-- スタート画面 -->
+    <div id="startScreen">
+        <div id="startBox">
+            <h2>🍉 ウォーターメロンゲーム</h2>
+            <p>同じキャラクターを合体させよう！</p>
+            <button id="startButton">ゲーム開始</button>
+        </div>
+    </div>
+
+    <div id="gameContainer">
+        <div id="topPanel">
+            <div class="info-bubble">
+                <span class="info-label">スコア</span>
+                <span class="info-value" id="scoreValue">0</span>
+                <span class="best-score-label">BEST SCORE</span>
+                <span class="info-value" style="font-size: 16px;" id="worldRecord">0</span>
+            </div>
+            <div id="nextBall">
+                <h3>ネクスト</h3>
+                <div id="nextPreview"></div>
+            </div>
+        </div>
+        <div id="gameArea">
+            <div id="canvasWrapper">
+                <canvas id="gameCanvas"></canvas>
+                <div class="game-line"></div>
+                <div id="gameOver">
+                    <h2>ゲームオーバー</h2>
+                    <p>スコア: <span id="finalScore">0</span></p>
+                    <button id="restartBtn">リスタート</button>
+                </div>
+            </div>
+            <div id="sinkaBar">
+                <h3>シンカの棒</h3>
+                <div id="sinkaBarImage">
+                    <span class="placeholder-text">画像を配置</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- デバッグボタン（左下） -->
+    <button id="debugButton">🔧</button>
+
+    <!-- デバッグパネル -->
+    <div id="debugPanel">
+        <h3>🔧 デバッグモード</h3>
+        <input type="password" id="debugPasswordInput" placeholder="パスワードを入力" />
+        <div id="debugPasswordError"></div>
+        <div id="debugButtons" style="display: none;">
+            <button id="debugCongrats">🎉 Congratulations演出</button>
+            <button id="debugGameOver">💀 ゲームオーバー</button>
+            <button id="debugSpawnFruit10">🍉 fruit_10を出現</button>
+        </div>
+        <button id="debugClose">閉じる</button>
+    </div>
+
+    <script>
+        console.log('=== Script Start ===');
+        
+        // ====================
+        // 初期化
+        // ====================
+        const difficultyScreen = document.getElementById('difficultyScreen');
+        const howToPlayScreen = document.getElementById('howToPlayScreen');
+        
+        console.log('difficultyScreen:', difficultyScreen);
+        console.log('howToPlayScreen:', howToPlayScreen);
+        
+        // 初回訪問チェック
+        const hasVisited = localStorage.getItem('watermelonGameVisited');
+        console.log('hasVisited:', hasVisited);
+        
+        // 初回訪問なら遊び方を表示
+        function showHowToPlayIfFirstTime() {
+            if (!hasVisited) {
+                console.log('Showing how to play');
+                howToPlayScreen.classList.add('active');
+                localStorage.setItem('watermelonGameVisited', 'true');
+            }
+        }
+        
+        function showDifficultyScreen() {
+            console.log('Showing difficulty screen');
+            difficultyScreen.classList.add('active');
+        }
+        
+        // ページ読み込み時に難易度選択を表示
+        showHowToPlayIfFirstTime();
+        showDifficultyScreen();
+        console.log('=== Initialization Complete ===');
+
+        // ====================
+        // Matter.js 物理エンジン設定
+        // ====================
+        console.log('=== Loading Matter.js ===');
+        console.log('Matter:', typeof Matter);
+        
+        if (typeof Matter === 'undefined') {
+            console.error('Matter.js is not loaded!');
+            alert('Matter.jsの読み込みに失敗しました。ページをリロードしてください。');
+        }
+        
+        const { Engine, Render, Runner, Bodies, Composite, Events, Body, Sleeping } = Matter;
+        
+        const canvas = document.getElementById('gameCanvas');
+        const wrapper = document.getElementById('canvasWrapper');
+        const gameContainer = document.getElementById('gameContainer');
+        
+        // キャンバスサイズ（固定）
+        let WIDTH = 500;
+        let HEIGHT = 550; // 1.1倍
+        const WALL_T = 10;
+        const GAME_LINE_RATIO = 0.15;
+        
+        // 物理エンジン作成（重力を弱く）
+        const engine = Engine.create({
+            constraintIterations: 5,
+            positionIterations: 10,
+            velocityIterations: 8,
+            gravity: { x: 0, y: 0.82 }  // 重力設定
+        });
+        
+        // レンダラー作成（Matter.jsのデフォルトレンダラーを使用）
+        const render = Render.create({
+            canvas: canvas,
+            engine: engine,
+            options: {
+                width: WIDTH,
+                height: HEIGHT,
+                wireframes: false,
+                background: 'linear-gradient(180deg, #FFF8E7 0%, #F5E6D3 100%)'
+            }
+        });
+        
+        const runner = Runner.create();
+        
+        // ====================
+        // 画像設定
+        // ====================
+        const FRUIT_IMAGES = {
+            0: 'images/fruit_0.png',
+            1: 'images/fruit_1.png',
+            2: 'images/fruit_2.png',
+            3: 'images/fruit_3.png',
+            4: 'images/fruit_4.png',
+            5: 'images/fruit_5.png',
+            6: 'images/fruit_6.png',
+            7: 'images/fruit_7.png',
+            8: 'images/fruit_8.png',
+            9: 'images/fruit_9.png',
+            10: 'images/fruit_10.png'
+        };
+        
+        const SINKA_BAR_IMAGE = 'images/sinka_bar.png';
+        
+        const fruitImageObjects = {};
+        let sinkaBarImageObject = null;
+        
+        // 画像プリロード
+        function preloadImages() {
+            for (let key in FRUIT_IMAGES) {
+                if (FRUIT_IMAGES[key]) {
+                    const img = new Image();
+                    img.src = FRUIT_IMAGES[key];
+                    fruitImageObjects[key] = img;
+                }
+            }
+            
+            if (SINKA_BAR_IMAGE) {
+                sinkaBarImageObject = new Image();
+                sinkaBarImageObject.onload = () => {
+                    const sinkaBarImg = document.getElementById('sinkaBarImage');
+                    sinkaBarImg.innerHTML = '';
+                    const imgElement = document.createElement('img');
+                    imgElement.src = SINKA_BAR_IMAGE;
+                    sinkaBarImg.appendChild(imgElement);
+                };
+                sinkaBarImageObject.src = SINKA_BAR_IMAGE;
+            }
+        }
+        
+        preloadImages();
+        
+        // ====================
+        // ゲーム設定
+        // ====================
+        const BALL_COLORS = [
+            '#FFE66D', '#FFB347', '#FF6B6B', '#C77DFF', '#FFD93D',
+            '#FF8C42', '#4ECDC4', '#95E1D3', '#F38181', '#FFEB3B', '#FFD700'
+        ];
+        
+        function getBallSize(type) {
+            const maxSize = WIDTH * 0.45 / 2;
+            const minSize = maxSize * 0.2;
+            const baseSize = minSize + (maxSize - minSize) * (type / 10);
+            return baseSize * ballSizeMultiplier; // 難易度による倍率を適用
+        }
+        
+        // ゲーム状態
+        let score = 0;
+        // ローカルストレージから最高スコアを読み込む
+        let worldRecord = parseInt(localStorage.getItem('watermelonBestScore')) || 0;
+        let nextBallType = 0;
+        let currentBall = null;
+        let droppedBall = null; // 落下中のボールを追跡
+        let isGameOver = false;
+        let canPut = false; // 最初はゲーム開始まで落とせない
+        let gameStarted = false; // ゲームが開始されたか
+        let isTouching = false; // タッチ中かどうか
+        let mouseX = WIDTH / 2;
+        
+        // 難易度設定
+        let currentDifficulty = 'normal'; // 'normal' or 'easy'
+        let ballSizeMultiplier = 1.0; // ボールサイズの倍率
+        let fieldHeightRatio = 1.1; // フィールドの高さ比率（横幅に対して）
+        
+        // やさしいモード開放チェック
+        const normalPlayCount = parseInt(localStorage.getItem('watermelonNormalPlayCount')) || 0;
+        const easyButton = document.getElementById('easyButton');
+        
+        // やさしいモードは常に開放
+        easyButton.classList.remove('locked');
+        easyButton.textContent = 'やさしい';
+        
+        // スコア更新
+        function updateScore() {
+            document.getElementById('scoreValue').textContent = score;
+            if (score > worldRecord) {
+                worldRecord = score;
+                document.getElementById('worldRecord').textContent = worldRecord;
+                // ローカルストレージに保存
+                localStorage.setItem('watermelonBestScore', worldRecord);
+            }
+        }
+        
+        // 次のボールプレビュー
+        function updateNextPreview() {
+            const preview = document.getElementById('nextPreview');
+            preview.innerHTML = '';
+            
+            if (fruitImageObjects[nextBallType]) {
+                const img = document.createElement('img');
+                img.src = fruitImageObjects[nextBallType].src;
+                preview.appendChild(img);
+            } else {
+                preview.style.backgroundColor = BALL_COLORS[nextBallType];
+                preview.textContent = nextBallType;
+            }
+        }
+        
+        function getRandomBallType() {
+            return Math.floor(Math.random() * 5);
+        }
+        
+        // ====================
+        // ゲーム初期化
+        // ====================
+        function initGame() {
+            // canvasサイズは固定（WIDTH, HEIGHTは変更しない）
+            canvas.width = WIDTH;
+            canvas.height = HEIGHT;
+            render.options.width = WIDTH;
+            render.options.height = HEIGHT;
+            
+            // ゲームオーバーライン位置（固定）
+            const gameLine = document.querySelector('.game-line');
+            gameLine.style.top = (550 * 0.15) + 'px'; // HEIGHT * GAME_LINE_RATIO
+            
+            const sinkaBar = document.getElementById('sinkaBar');
+            // シンカの棒の高さ（固定）
+            sinkaBar.style.height = '210px';
+            
+            // ワールドをクリア
+            Composite.clear(engine.world);
+            
+            // 壁と床を作成
+            const ground = Bodies.rectangle(WIDTH / 2, HEIGHT - WALL_T / 2, WIDTH, WALL_T, {
+                isStatic: true,
+                render: { fillStyle: '#D2B48C' }
+            });
+            
+            const leftWall = Bodies.rectangle(WALL_T / 2, HEIGHT / 2, WALL_T, HEIGHT, {
+                isStatic: true,
+                render: { fillStyle: '#D2B48C' }
+            });
+            
+            const rightWall = Bodies.rectangle(WIDTH - WALL_T / 2, HEIGHT / 2, WALL_T, HEIGHT, {
+                isStatic: true,
+                render: { fillStyle: '#D2B48C' }
+            });
+            
+            Composite.add(engine.world, [ground, leftWall, rightWall]);
+            
+            // 状態リセット
+            score = 0;
+            isGameOver = false;
+            canPut = false; // スタートボタンを押すまで待つ
+            gameStarted = false;
+            currentBall = null;
+            droppedBall = null;
+            nextBallType = getRandomBallType();
+            
+            updateScore();
+            updateNextPreview();
+            
+            // 最高スコアを表示
+            document.getElementById('worldRecord').textContent = worldRecord;
+            
+            // レンダラーとランナー開始
+            Render.run(render);
+            Runner.run(runner, engine);
+            
+            // イベント登録
+            setupEvents();
+        }
+        
+        // 難易度選択ボタン処理
+        document.getElementById('normalButton').addEventListener('click', () => {
+            currentDifficulty = 'normal';
+            ballSizeMultiplier = 1.0;
+            fieldHeightRatio = 1.1;
+            
+            difficultyScreen.classList.remove('active');
+            gameContainer.classList.add('active');
+            document.getElementById('startScreen').classList.add('active');
+            initGame();
+        });
+        
+        document.getElementById('easyButton').addEventListener('click', () => {
+            currentDifficulty = 'easy';
+            ballSizeMultiplier = 0.7;
+            fieldHeightRatio = 1.1;
+            
+            difficultyScreen.classList.remove('active');
+            gameContainer.classList.add('active');
+            document.getElementById('startScreen').classList.add('active');
+            initGame();
+        });
+        
+        // スタートボタン処理
+        document.getElementById('startButton').addEventListener('click', () => {
+            document.getElementById('startScreen').classList.remove('active');
+            gameStarted = true;
+            canPut = true;
+            createNewBall(); // 最初のボールを表示
+        });
+        
+        // ====================
+        // イベント設定
+        // ====================
+        function setupEvents() {
+            // 衝突イベント
+            Events.on(engine, 'collisionStart', handleCollision);
+            
+            // ゲームオーバー判定
+            Events.on(engine, 'afterUpdate', checkGameOver);
+        }
+        
+        // 衝突処理
+        function handleCollision({ pairs }) {
+            for (const pair of pairs) {
+                const { bodyA, bodyB } = pair;
+                
+                // 落下中のボールが何かに触れたら次のボールを出せるようにする
+                if (droppedBall && (bodyA.id === droppedBall.id || bodyB.id === droppedBall.id)) {
+                    droppedBall = null;
+                    
+                    // 短いインターバル後に次のボールを出す
+                    setTimeout(() => {
+                        canPut = true;
+                        createNewBall();
+                    }, 100);
+                }
+                
+                if (!Composite.get(engine.world, bodyA.id, 'body') ||
+                    !Composite.get(engine.world, bodyB.id, 'body')) {
+                    continue;
+                }
+                
+                if (bodyA.label === bodyB.label && bodyA.label.startsWith('bubble_')) {
+                    const currentLevel = Number(bodyA.label.substring(7));
+                    
+                    // スコア加算
+                    score += Math.pow(2, currentLevel + 1);
+                    updateScore();
+                    
+                    if (currentLevel === 10) {
+                        // ボーナススコア加算
+                        const bonus = 5000;
+                        score += bonus;
+                        updateScore();
+                        
+                        // お祝い演出を表示
+                        showCongratulations();
+                        
+                        // ボールを削除
+                        Composite.remove(engine.world, [bodyA, bodyB]);
+                        continue;
+                    }
+                    
+                    const newLevel = currentLevel + 1;
+                    const newX = (bodyA.position.x + bodyB.position.x) / 2;
+                    const newY = (bodyA.position.y + bodyB.position.y) / 2;
+                    const newRadius = getBallSize(newLevel);
+                    
+                    const newBall = Bodies.circle(newX, newY, newRadius, {
+                        label: 'bubble_' + newLevel,
+                        restitution: 0.2,
+                        friction: 0.5,
+                        frictionAir: 0.01,
+                        density: 0.002,
+                        slop: 0.05,
+                        render: {
+                            fillStyle: BALL_COLORS[newLevel],
+                            sprite: fruitImageObjects[newLevel] ? {
+                                texture: FRUIT_IMAGES[newLevel],
+                                xScale: (newRadius * 2) / 500,
+                                yScale: (newRadius * 2) / 500
+                            } : undefined
+                        }
+                    });
+                    
+                    Composite.remove(engine.world, [bodyA, bodyB]);
+                    Composite.add(engine.world, [newBall]);
+                }
+            }
+        }
+        
+        // ゲームオーバー判定
+        function checkGameOver() {
+            const gameLineY = HEIGHT * GAME_LINE_RATIO;
+            const bubbles = Composite.allBodies(engine.world).filter(body => 
+                body.label.startsWith('bubble_')
+            );
+            
+            for (const bubble of bubbles) {
+                if (bubble.position.y - bubble.circleRadius < gameLineY && bubble.velocity.y < 0) {
+                    Runner.stop(runner);
+                    isGameOver = true;
+                    showGameOver();
+                    break;
+                }
+            }
+        }
+        
+        // ゲームオーバー表示
+        // お祝い演出
+        function showCongratulations() {
+            const congratsScreen = document.getElementById('congratsScreen');
+            const congratsBox = document.getElementById('congratsBox');
+            
+            // 画面を表示
+            congratsScreen.classList.add('active');
+            
+            // キラキラエフェクトを追加
+            createSparkles(congratsBox);
+            
+            // ゲーム一時停止
+            canPut = false;
+        }
+        
+        // キラキラエフェクトを生成
+        function createSparkles(container) {
+            const sparkleCount = 30;
+            for (let i = 0; i < sparkleCount; i++) {
+                setTimeout(() => {
+                    const sparkle = document.createElement('div');
+                    sparkle.className = 'sparkle';
+                    
+                    // ランダムな方向に飛ばす
+                    const angle = (Math.PI * 2 * i) / sparkleCount;
+                    const distance = 150 + Math.random() * 100;
+                    const tx = Math.cos(angle) * distance;
+                    const ty = Math.sin(angle) * distance;
+                    
+                    sparkle.style.setProperty('--tx', tx + 'px');
+                    sparkle.style.setProperty('--ty', ty + 'px');
+                    sparkle.style.left = '50%';
+                    sparkle.style.top = '50%';
+                    
+                    container.appendChild(sparkle);
+                    
+                    // アニメーション終了後に削除
+                    setTimeout(() => sparkle.remove(), 1000);
+                }, i * 30);
+            }
+        }
+        
+        // 続けるボタン
+        document.getElementById('congratsContinue').addEventListener('click', () => {
+            document.getElementById('congratsScreen').classList.remove('active');
+            canPut = true;
+            createNewBall();
+        });
+        
+        function showGameOver() {
+            // ノーマルモードでプレイした場合、カウントを増やす
+            if (currentDifficulty === 'normal') {
+                const count = parseInt(localStorage.getItem('watermelonNormalPlayCount')) || 0;
+                localStorage.setItem('watermelonNormalPlayCount', count + 1);
+            }
+            
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('gameOver').style.display = 'block';
+        }
+        
+        // リスタート
+        document.getElementById('restartBtn').addEventListener('click', () => {
+            document.getElementById('gameOver').style.display = 'none';
+            
+            // 難易度選択に戻る
+            showDifficultyScreen();
+        });
+        
+        // ====================
+        // ボール配置
+        // ====================
+        canvas.addEventListener('mousemove', (e) => {
+            if (isGameOver || !canPut) return;
+            const rect = canvas.getBoundingClientRect();
+            mouseX = (e.clientX - rect.left) * (WIDTH / rect.width);
+            
+            if (currentBall) {
+                const radius = currentBall.circleRadius;
+                const newX = Math.max(WALL_T + radius, Math.min(WIDTH - WALL_T - radius, mouseX));
+                Body.setPosition(currentBall, { x: newX, y: currentBall.position.y });
+            }
+        });
+        
+        canvas.addEventListener('click', (e) => {
+            if (isGameOver || !canPut) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            mouseX = (e.clientX - rect.left) * (WIDTH / rect.width);
+            
+            if (!currentBall) {
+                createNewBall();
+            } else {
+                dropBall();
+            }
+        });
+        
+        // タッチ開始
+        canvas.addEventListener('touchstart', (e) => {
+            if (isGameOver || !canPut) return;
+            e.preventDefault();
+            isTouching = true;
+            
+            const rect = canvas.getBoundingClientRect();
+            mouseX = (e.touches[0].clientX - rect.left) * (WIDTH / rect.width);
+            
+            if (!currentBall) {
+                createNewBall();
+            }
+        });
+        
+        canvas.addEventListener('touchmove', (e) => {
+            if (isGameOver || !canPut || !isTouching) return;
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            mouseX = (e.touches[0].clientX - rect.left) * (WIDTH / rect.width);
+            
+            if (currentBall) {
+                const radius = currentBall.circleRadius;
+                const newX = Math.max(WALL_T + radius, Math.min(WIDTH - WALL_T - radius, mouseX));
+                Body.setPosition(currentBall, { x: newX, y: currentBall.position.y });
+            }
+        });
+        
+        canvas.addEventListener('touchend', (e) => {
+            if (isGameOver || !canPut || !isTouching) return;
+            e.preventDefault();
+            isTouching = false;
+            
+            // 指を離した瞬間にボールを落とす
+            if (currentBall) {
+                dropBall();
+            }
+        });
+        
+        function createNewBall() {
+            const radius = getBallSize(nextBallType);
+            const x = Math.max(WALL_T + radius, Math.min(WIDTH - WALL_T - radius, mouseX));
+            
+            currentBall = Bodies.circle(x, 30, radius, {
+                isSleeping: true,
+                label: 'bubble_' + nextBallType,
+                restitution: 0.2,    // 反発を弱く（バウンドしにくい）
+                friction: 0.5,       // 摩擦を強く（転がりにくい）
+                frictionAir: 0.01,   // 空気抵抗
+                density: 0.002,      // 密度を少し上げる
+                slop: 0.05,
+                render: {
+                    fillStyle: BALL_COLORS[nextBallType],
+                    sprite: fruitImageObjects[nextBallType] ? {
+                        texture: FRUIT_IMAGES[nextBallType],
+                        xScale: (radius * 2) / 500,
+                        yScale: (radius * 2) / 500
+                    } : undefined
+                }
+            });
+            
+            Composite.add(engine.world, [currentBall]);
+        }
+        
+        function dropBall() {
+            if (!currentBall) return;
+            
+            Sleeping.set(currentBall, false);
+            droppedBall = currentBall; // 落下中のボールを記録
+            currentBall = null;
+            
+            // 次のネクストを準備
+            nextBallType = getRandomBallType();
+            updateNextPreview();
+            
+            // ボールが他のボールに触れるまで次を出さない
+            canPut = false;
+        }
+        
+        // ====================
+        // 遊び方説明
+        // ====================
+        const howToPlayButton = document.createElement('button');
+        howToPlayButton.id = 'howToPlayButton';
+        howToPlayButton.textContent = '?';
+        document.body.appendChild(howToPlayButton);
+        
+        // 遊び方ボタンをクリック
+        howToPlayButton.addEventListener('click', () => {
+            howToPlayScreen.classList.add('active');
+        });
+        
+        // 閉じるボタン
+        document.getElementById('closeHowToPlay').addEventListener('click', () => {
+            howToPlayScreen.classList.remove('active');
+        });
+
+        // ====================
+        // デバッグ機能
+        // ====================
+        const DEBUG_PASSWORD = 'suika';
+        const debugButton = document.getElementById('debugButton');
+        const debugPanel = document.getElementById('debugPanel');
+        const debugPasswordInput = document.getElementById('debugPasswordInput');
+        const debugPasswordError = document.getElementById('debugPasswordError');
+        const debugButtons = document.getElementById('debugButtons');
+        let debugUnlocked = false;
+
+        // デバッグボタンクリック
+        debugButton.addEventListener('click', () => {
+            debugPanel.classList.add('active');
+            debugPasswordInput.value = '';
+            debugPasswordError.textContent = '';
+            if (debugUnlocked) {
+                debugPasswordInput.style.display = 'none';
+                debugButtons.style.display = 'block';
+            } else {
+                debugPasswordInput.style.display = 'block';
+                debugButtons.style.display = 'none';
+                debugPasswordInput.focus();
+            }
+        });
+
+        // パスワード入力
+        debugPasswordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                if (debugPasswordInput.value === DEBUG_PASSWORD) {
+                    debugUnlocked = true;
+                    debugPasswordInput.style.display = 'none';
+                    debugButtons.style.display = 'block';
+                    debugPasswordError.textContent = '';
+                } else {
+                    debugPasswordError.textContent = '❌ パスワードが違います';
+                    debugPasswordInput.value = '';
+                    setTimeout(() => {
+                        debugPasswordError.textContent = '';
+                    }, 2000);
+                }
+            }
+        });
+
+        // Congratulations演出
+        document.getElementById('debugCongrats').addEventListener('click', () => {
+            debugPanel.classList.remove('active');
+            showCongratulations();
+        });
+
+        // ゲームオーバー
+        document.getElementById('debugGameOver').addEventListener('click', () => {
+            debugPanel.classList.remove('active');
+            isGameOver = true;
+            showGameOver();
+        });
+
+        // fruit_10を出現
+        document.getElementById('debugSpawnFruit10').addEventListener('click', () => {
+            debugPanel.classList.remove('active');
+            const x = WIDTH / 2;
+            const y = HEIGHT * 0.3;
+            const radius = getBallSize(10);
+            
+            const fruit10 = Bodies.circle(x, y, radius, {
+                label: 'bubble_10',
+                restitution: 0.2,
+                friction: 0.5,
+                frictionAir: 0.01,
+                density: 0.002,
+                slop: 0.05,
+                render: {
+                    fillStyle: BALL_COLORS[10],
+                    sprite: fruitImageObjects[10] ? {
+                        texture: FRUIT_IMAGES[10],
+                        xScale: (radius * 2) / 500,
+                        yScale: (radius * 2) / 500
+                    } : null
+                }
+            });
+            
+            Composite.add(engine.world, fruit10);
+        });
+
+        // 閉じるボタン
+        document.getElementById('debugClose').addEventListener('click', () => {
+            debugPanel.classList.remove('active');
+        });
+    </script>
+</body>
+</html>
