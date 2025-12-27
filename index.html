@@ -1,0 +1,3365 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>ウォーターメロンゲーム v5.0</title>
+    <script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Rounded Mplus 1c', 'Arial', sans-serif;
+            background: linear-gradient(180deg, #C8A882 0%, #A67C52 100%);
+            min-height: 100vh;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        /* パスワード画面 */
+        /* スタート画面 */
+        #startScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10001;
+        }
+
+        #startScreen.active {
+            display: flex;
+        }
+
+        #startBox {
+            background: rgba(255, 248, 230, 0.98);
+            padding: 60px 80px;
+            border-radius: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            text-align: center;
+            border: 3px solid #D2691E;
+        }
+
+        #startBox h2 {
+            font-size: 36px;
+            color: #D2691E;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #startBox p {
+            font-size: 16px;
+            color: #8B4513;
+            margin-bottom: 30px;
+        }
+
+        #startButton {
+            width: 100%;
+            background: linear-gradient(135deg, #FFB347 0%, #FF8C42 100%);
+            color: white;
+            border: none;
+            padding: 18px 50px;
+            border-radius: 10px;
+            font-size: 22px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 15px rgba(255, 140, 66, 0.4);
+        }
+
+        #startButton:hover {
+            transform: translateY(-2px);
+        }
+
+        #startButton:active {
+            transform: translateY(0);
+        }
+
+        /* 難易度選択画面 */
+        #difficultyScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(200, 168, 130, 0.95);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10001;
+        }
+
+        #difficultyScreen.active {
+            display: flex;
+        }
+
+        #versionLabel {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            font-size: 14px;
+            color: rgba(139, 69, 19, 0.4);
+            font-weight: bold;
+            user-select: none;
+            pointer-events: none;
+        }
+
+        #difficultyBox {
+            background: rgba(255, 248, 230, 0.98);
+            padding: 50px 60px;
+            border-radius: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            text-align: center;
+            border: 3px solid #D2691E;
+            max-width: 400px;
+        }
+
+        #difficultyBox h2 {
+            font-size: 20px;
+            color: #8B4513;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #D2691E;
+            text-align: center;
+        }
+
+        .difficulty-button {
+            width: 100%;
+            background: linear-gradient(135deg, #FFB347 0%, #FF8C42 100%);
+            color: white;
+            border: none;
+            padding: 18px 60px;
+            border-radius: 10px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 15px rgba(255, 140, 66, 0.4);
+            margin-bottom: 15px;
+        }
+
+        .difficulty-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .difficulty-button:active {
+            transform: translateY(0);
+        }
+
+        .difficulty-button.locked {
+            background: linear-gradient(135deg, #ccc 0%, #999 100%);
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .difficulty-button.locked:hover {
+            transform: none;
+        }
+
+        .difficulty-description {
+            font-size: 14px;
+            color: #8B4513;
+            margin-top: -10px;
+            margin-bottom: 15px;
+        }
+
+        /* ハイスコア一覧画面 */
+        #highScoreScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10002;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        #highScoreScreen.active {
+            display: flex;
+        }
+
+        #highScoreBox {
+            background: linear-gradient(135deg, #FFF8E1 0%, #FFE4B5 100%);
+            padding: 40px 30px;
+            border-radius: 20px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 3px solid #D2691E;
+        }
+
+        #highScoreBox h2 {
+            font-size: 28px;
+            color: #D2691E;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        #highScoreList {
+            margin-bottom: 25px;
+        }
+
+        .high-score-section {
+            margin-bottom: 20px;
+        }
+
+        .high-score-section h3 {
+            font-size: 16px;
+            color: #8B4513;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid rgba(139, 69, 19, 0.2);
+        }
+
+        .high-score-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 10px;
+            margin-bottom: 8px;
+        }
+
+        .difficulty-name {
+            font-size: 18px;
+            color: #8B4513;
+            font-weight: bold;
+        }
+
+        .score-value {
+            font-size: 22px;
+            color: #D2691E;
+            font-weight: bold;
+        }
+
+        .high-score-divider {
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgba(139, 69, 19, 0.3), transparent);
+            margin: 20px 0;
+        }
+
+        #closeHighScore {
+            width: 100%;
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF4444 100%);
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        #closeHighScore:hover {
+            transform: translateY(-2px);
+        }
+
+        /* オンラインランキング画面 */
+        #rankingScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10003;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        #rankingScreen.active {
+            display: flex;
+        }
+
+        #rankingBox {
+            background: linear-gradient(135deg, #FFF8E1 0%, #FFE4B5 100%);
+            padding: 40px 30px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 3px solid #D2691E;
+        }
+
+        #rankingBox h2 {
+            font-size: 28px;
+            color: #D2691E;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        #rankingModeSelect {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .ranking-mode-btn {
+            flex: 1;
+            min-width: 100px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.6);
+            border: 2px solid #D2691E;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #8B4513;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .ranking-mode-btn:hover {
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .ranking-mode-btn.active {
+            background: #D2691E;
+            color: white;
+        }
+
+        #rankingList {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            min-height: 200px;
+        }
+
+        .ranking-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 10px;
+            background: rgba(255, 248, 230, 0.8);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border: 2px solid rgba(210, 105, 30, 0.3);
+        }
+
+        .ranking-item.top3 {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            border-color: #D2691E;
+        }
+
+        .ranking-rank {
+            font-size: 20px;
+            font-weight: bold;
+            color: #D2691E;
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .ranking-item.top3 .ranking-rank {
+            color: #8B4513;
+        }
+
+        .ranking-player {
+            flex: 1;
+            font-size: 16px;
+            color: #8B4513;
+            font-weight: bold;
+            padding: 0 10px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .ranking-score {
+            font-size: 18px;
+            font-weight: bold;
+            color: #D2691E;
+        }
+
+        .ranking-item.top3 .ranking-score {
+            color: #8B4513;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px 20px;
+            font-size: 16px;
+            color: #8B4513;
+        }
+
+        .error {
+            text-align: center;
+            padding: 40px 20px;
+            font-size: 14px;
+            color: #FF6B6B;
+        }
+
+        /* Congratulationsウィンドウ */
+        #congratsScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10003;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        #congratsScreen.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        #congratsBox {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            padding: 30px 20px;
+            border-radius: 30px;
+            text-align: center;
+            position: relative;
+            border: 5px solid #FFD700;
+            animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            max-width: 90vw;
+            box-sizing: border-box;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); }
+            100% { transform: scale(1); }
+        }
+
+        #congratsBox h1 {
+            font-size: clamp(20px, 7vw, 48px);
+            color: #fff;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
+            margin-bottom: 15px;
+            animation: pulse 1s infinite;
+            line-height: 1.2;
+            word-break: keep-all;
+            overflow-wrap: break-word;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        #congratsFruit {
+            width: clamp(120px, 40vw, 200px);
+            height: clamp(120px, 40vw, 200px);
+            margin: 20px auto;
+            position: relative;
+            animation: float 2s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(5deg); }
+        }
+
+        #congratsBonus {
+            font-size: clamp(20px, 6vw, 32px);
+            color: #fff;
+            font-weight: bold;
+            margin: 20px 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        #congratsContinue {
+            font-size: clamp(16px, 4vw, 20px);
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 25px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+            transition: transform 0.2s;
+        }
+
+        #congratsContinue:hover {
+            transform: translateY(-2px);
+        }
+
+        #congratsContinue:active {
+            transform: translateY(0);
+        }
+
+        #congratsFruit img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
+        }
+
+        .burst {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 300px;
+            height: 300px;
+            margin: -150px 0 0 -150px;
+            pointer-events: none;
+        }
+
+        .burst::before,
+        .burst::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 100%;
+            height: 100%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            animation: burstExpand 0.8s ease-out;
+        }
+
+        .burst::before {
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.8) 0%, transparent 70%);
+        }
+
+        .burst::after {
+            background: radial-gradient(circle, rgba(255, 165, 0, 0.6) 0%, transparent 70%);
+            animation-delay: 0.2s;
+        }
+
+        @keyframes burstExpand {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(2); opacity: 0; }
+        }
+
+        .sparkle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #FFD700;
+            border-radius: 50%;
+            animation: sparkle 1s ease-out forwards;
+        }
+
+        @keyframes sparkle {
+            0% {
+                transform: translate(0, 0) scale(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--tx), var(--ty)) scale(1);
+                opacity: 0;
+            }
+        }
+
+        /* デバッグボタン（控えめ） */
+        #debugButton {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(139, 69, 19, 0.15);
+            color: rgba(139, 69, 19, 0.3);
+            border: 1px solid rgba(139, 69, 19, 0.2);
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            z-index: 100;
+        }
+
+        #debugButton:hover {
+            background: rgba(139, 69, 19, 0.25);
+            color: rgba(139, 69, 19, 0.5);
+        }
+
+        /* デバッグパネル */
+        #debugPanel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 248, 230, 0.98);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            border: 3px solid #D2691E;
+            z-index: 10004;
+            display: none;
+        }
+
+        #debugPanel.active {
+            display: block;
+        }
+
+        #debugPanel h3 {
+            font-size: 18px;
+            color: #D2691E;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        #debugPanel button {
+            width: 100%;
+            background: linear-gradient(135deg, #FFB347 0%, #FF8C42 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            margin: 8px 0;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 10px rgba(255, 140, 66, 0.3);
+        }
+
+        #debugPanel button:hover {
+            transform: translateY(-2px);
+        }
+
+        #debugPanel button:active {
+            transform: translateY(0);
+        }
+
+        #debugClose {
+            background: linear-gradient(135deg, #999 0%, #777 100%) !important;
+            margin-top: 15px;
+        }
+
+        /* デバッグパスワード入力 */
+        #debugPasswordInput {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 2px solid #D2B48C;
+            border-radius: 8px;
+            font-size: 14px;
+            text-align: center;
+            outline: none;
+        }
+
+        #debugPasswordInput:focus {
+            border-color: #D2691E;
+        }
+
+        #debugPasswordError {
+            color: #dc3545;
+            font-size: 12px;
+            text-align: center;
+            margin-top: -10px;
+            margin-bottom: 10px;
+            min-height: 16px;
+        }
+
+        /* 遊び方説明画面 */
+        #howToPlayScreen,
+        #howToPlayScreenReze,
+        #howToPlayScreenGojo {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10002;
+        }
+
+        #howToPlayScreen.active,
+        #howToPlayScreenReze.active,
+        #howToPlayScreenGojo.active {
+            display: flex;
+        }
+
+        #howToPlayBox {
+            background: rgba(255, 248, 230, 0.98);
+            padding: 40px 50px;
+            border-radius: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            text-align: left;
+            border: 3px solid #D2691E;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        #howToPlayBox h2 {
+            font-size: 28px;
+            color: #D2691E;
+            margin-bottom: 20px;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #howToPlayBox h3 {
+            font-size: 20px;
+            color: #D2691E;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        #howToPlayBox p {
+            font-size: 16px;
+            color: #8B4513;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        #howToPlayBox ul {
+            margin: 10px 0 15px 20px;
+            color: #8B4513;
+        }
+
+        #howToPlayBox li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        #closeHowToPlay,
+        #closeHowToPlayReze,
+        #closeHowToPlayGojo {
+            width: 100%;
+            background: linear-gradient(135deg, #FFB347 0%, #FF8C42 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 15px rgba(255, 140, 66, 0.4);
+            margin-top: 20px;
+        }
+
+        #closeHowToPlay:hover,
+        #closeHowToPlayReze:hover,
+        #closeHowToPlayGojo:hover {
+            transform: translateY(-2px);
+        }
+
+        #closeHowToPlay:active,
+        #closeHowToPlayReze:active,
+        #closeHowToPlayGojo:active {
+            transform: translateY(0);
+        }
+
+        /* 遊び方ボタン */
+        #howToPlayButton {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 248, 230, 0.95);
+            color: #D2691E;
+            border: 2px solid #D2691E;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+
+        #howToPlayButton:hover {
+            background: #D2691E;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        #howToPlayButton:active {
+            transform: scale(0.95);
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin: 20px auto;
+            min-height: 100vh;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            gap: 8px;
+            box-sizing: border-box;
+        }
+        
+        #gameContainer.active {
+            display: flex;
+        }
+
+        #topPanel {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            width: 100%;
+            max-width: 500px;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        .info-bubble {
+            background: rgba(255, 248, 230, 0.95);
+            border-radius: 15px;
+            width: auto;
+            min-width: 140px;
+            padding: 8px 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(139, 69, 19, 0.3);
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            flex-shrink: 0;
+            gap: 3px;
+        }
+
+        .info-label {
+            font-size: 11px;
+            color: #8B4513;
+            font-weight: bold;
+        }
+
+        .info-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #D2691E;
+            line-height: 1;
+        }
+
+        .score-divider {
+            width: 80%;
+            height: 1px;
+            background: rgba(139, 69, 19, 0.2);
+            margin: 2px 0;
+        }
+
+        .best-score-label {
+            font-size: 10px;
+            color: #8B4513;
+            font-weight: bold;
+            line-height: 1;
+        }
+        }
+
+        .best-score-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: #D2691E;
+            opacity: 0.8;
+        }
+
+        #nextBall {
+            background: rgba(255, 248, 230, 0.95);
+            border-radius: 50%;
+            width: 100px;
+            height: 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(139, 69, 19, 0.3);
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            flex-shrink: 0;
+        }
+
+        #gameRestartButton {
+            background: rgba(255, 248, 230, 0.95);
+            border-radius: 15px;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #8B4513;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(139, 69, 19, 0.3);
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            transition: transform 0.2s;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        #gameRestartButton:hover {
+            transform: translateY(-1px);
+        }
+
+        #gameRestartButton:active {
+            transform: translateY(0);
+        }
+
+        #nextBall h3 {
+            font-size: 12px;
+            color: #8B4513;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        #nextPreview {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        #nextPreview img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        #gameArea {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 500px;
+            gap: 5px;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        #canvasWrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1 / 1.1;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #gameCanvas {
+            border-radius: 10px;
+            box-shadow: 
+                0 8px 20px rgba(0,0,0,0.2),
+                inset 0 2px 5px rgba(255,255,255,0.5);
+            border: 3px solid #D2B48C;
+            cursor: pointer;
+            touch-action: none;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        #sinkaBar {
+            position: relative;
+            width: 100%;
+            background: rgba(255, 248, 230, 0.95);
+            border-radius: 10px;
+            padding: 3px;
+            box-shadow: 0 4px 15px rgba(139, 69, 19, 0.3);
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            flex-shrink: 1;
+            min-height: 0;
+        }
+
+        #tapSafeZone {
+            width: 100%;
+            height: 90px;
+            background: rgba(255, 248, 230, 0.95);
+            border: 2px dashed rgba(76, 175, 80, 0.5);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            color: rgba(76, 175, 80, 0.9);
+            font-weight: bold;
+            margin: 5px 0;
+            user-select: none;
+            box-shadow: 0 2px 8px rgba(139, 69, 19, 0.2);
+            cursor: pointer;
+        }
+
+        #sinkaBar h3 {
+            font-size: 11px;
+            color: #8B4513;
+            text-align: center;
+            margin-bottom: 2px;
+            font-weight: bold;
+            position: relative;
+            z-index: 1;
+        }
+
+        #sinkaBarImage {
+            width: 100%;
+            display: block;
+            line-height: 0;
+        }
+
+        #sinkaBarImage img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .placeholder-text {
+            font-size: 12px;
+            color: #8B4513;
+            opacity: 0.5;
+            text-align: center;
+        }
+
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 248, 230, 0.98);
+            padding: 40px 60px;
+            border-radius: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            text-align: center;
+            display: none;
+            pointer-events: all;
+            border: 3px solid #D2691E;
+            z-index: 1000;
+            min-width: 350px;
+            white-space: nowrap;
+        }
+
+        #gameOver h2 {
+            font-size: 28px;
+            color: #D2691E;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            white-space: nowrap;
+        }
+
+        #gameOver p {
+            font-size: 18px;
+            color: #8B4513;
+            margin-bottom: 25px;
+            white-space: nowrap;
+        }
+
+        #restartBtn {
+            background: linear-gradient(135deg, #FFB347 0%, #FF8C42 100%);
+            color: white;
+            border: none;
+            padding: 12px 35px;
+            border-radius: 30px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            box-shadow: 0 4px 15px rgba(255, 140, 66, 0.4);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+            white-space: nowrap;
+        }
+
+        #restartBtn:active {
+            transform: scale(0.95);
+        }
+
+        .game-line {
+            position: absolute;
+            left: 10px;
+            right: 10px;
+            height: 2px;
+            background: rgba(255, 107, 107, 0.6);
+            pointer-events: none;
+            z-index: 10;
+            border-style: dashed;
+        }
+
+        @media (max-width: 768px) {
+            #gameContainer {
+                padding: 8px;
+                gap: 6px;
+            }
+            
+            #topPanel {
+                gap: 12px;
+            }
+            
+            .info-bubble, #nextBall {
+                width: 85px;
+                height: 85px;
+            }
+            
+            .info-label {
+                font-size: 11px;
+            }
+            
+            .info-value {
+                font-size: 20px;
+            }
+            
+            #nextPreview {
+                width: 50px;
+                height: 50px;
+            }
+            
+            /* シンカの棒を小さく表示 */
+            #sinkaBar {
+                padding: 8px;
+                border-radius: 8px;
+            }
+            
+            #sinkaBar h3 {
+                font-size: 11px;
+                margin-bottom: 5px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #gameContainer {
+                padding: 6px;
+                gap: 5px;
+            }
+            
+            #topPanel {
+                gap: 10px;
+            }
+            
+            .info-bubble, #nextBall {
+                width: 75px;
+                height: 75px;
+            }
+            
+            .info-label, #nextBall h3 {
+                font-size: 10px;
+            }
+            
+            .info-value {
+                font-size: 18px;
+            }
+            
+            .best-score-label {
+                font-size: 8px;
+            }
+            
+            #nextPreview {
+                width: 42px;
+                height: 42px;
+            }
+            
+            #gameRestartButton {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+            
+            #sinkaBar h3 {
+                font-size: 10px;
+                margin-bottom: 2px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Congratulations画面 -->
+    <div id="congratsScreen">
+        <div id="congratsBox">
+            <div class="burst"></div>
+            <h1>🎉 Congratulations! 🎉</h1>
+            <div id="congratsFruit">
+                <img src="images/fruit_10.png" alt="Maximum Fruit">
+            </div>
+            <div id="congratsBonus">ボーナス: +5000点</div>
+            <button id="congratsContinue">ゲームを続ける</button>
+        </div>
+    </div>
+
+    <!-- 遊び方説明画面 - 通常 -->
+    <div id="howToPlayScreen">
+        <div id="howToPlayBox">
+            <h2>📖 遊び方</h2>
+            
+            <h3>🎯 ゲームの目的</h3>
+            <p>同じキャラクターを合体させて、より大きなキャラクターを作りましょう！</p>
+            
+            <h3>🎮 操作方法</h3>
+            
+            <p><strong>📱 タブレット・スマホの場合：</strong></p>
+            <ul>
+                <li>画面をタップするとボールが出現</li>
+                <li>指を左右に動かしてボールを移動</li>
+                <li>指を離すとボールが落下</li>
+            </ul>
+            
+            <p><strong>🖱️ PCの場合：</strong></p>
+            <ul>
+                <li>マウスを左右に動かしてボールを移動</li>
+                <li>クリックでボールが落下</li>
+            </ul>
+            
+            <h3>✨ ルール</h3>
+            <ul>
+                <li>同じキャラクター同士が触れると合体</li>
+                <li>合体するとスコアが増える</li>
+                <li>赤い線を超えるとゲームオーバー</li>
+            </ul>
+            
+            <button id="closeHowToPlay">閉じる</button>
+        </div>
+    </div>
+
+    <!-- 遊び方説明画面 - レゼ篇 -->
+    <div id="howToPlayScreenReze">
+        <div id="howToPlayBox">
+            <h2>📖 遊び方 - レゼ篇</h2>
+            
+            <h3>🎮 基本操作</h3>
+            <p>通常モードと同じ操作でボールを配置します</p>
+            
+            <h3>💣 ボムの特別ルール</h3>
+            <div style="background: rgba(255, 248, 230, 0.5); padding: 15px; border-radius: 10px; margin: 10px 0;">
+                <p><strong>ボムの使い方：</strong></p>
+                <div style="display: flex; align-items: center; gap: 10px; margin: 10px 0;">
+                    <img src="images/bakudan_dynamite.png" style="width: 60px; height: 60px; object-fit: contain;">
+                    <span style="font-size: 24px;">→</span>
+                    <img src="images/fruit_4.png" style="width: 50px; height: 50px; object-fit: contain;">
+                    <span style="font-size: 16px;">以下を消去</span>
+                </div>
+                <ul style="margin-top: 10px;">
+                    <li>ボムは10回に1回程度の確率で出現</li>
+                    <li><strong>ボムをタップ/クリックすると爆発</strong></li>
+                    <li>周囲の一定範囲のボールを消す</li>
+                    <li>消したボールのスコアを獲得</li>
+                    <li>ボム同士・ボムと他のボールは合体しない</li>
+                </ul>
+            </div>
+            
+            <button id="closeHowToPlayReze">閉じる</button>
+        </div>
+    </div>
+
+    <!-- 遊び方説明画面 - 五条篇 -->
+    <div id="howToPlayScreenGojo">
+        <div id="howToPlayBox">
+            <h2>📖 遊び方 - 五条篇</h2>
+            
+            <h3>🎮 基本操作</h3>
+            <p>通常モードと同じ操作でボールを配置します</p>
+            
+            <h3>⚡ 術式の特別ルール</h3>
+            
+            <div style="background: rgba(255, 248, 230, 0.5); padding: 15px; border-radius: 10px; margin: 10px 0;">
+                <p><strong>🔴 反転「赫」：</strong></p>
+                <div style="display: flex; align-items: center; gap: 10px; margin: 10px 0;">
+                    <img src="images/Go_aka.png" style="width: 60px; height: 60px; object-fit: contain;">
+                    <span style="font-size: 24px;">→</span>
+                    <img src="images/fruit_4.png" style="width: 50px; height: 50px; object-fit: contain;">
+                    <span style="font-size: 16px;">以下を消去</span>
+                </div>
+                <p style="font-size: 14px; margin: 5px 0 0 0;">タップで周囲のボールを消去</p>
+            </div>
+            
+            <div style="background: rgba(248, 248, 255, 0.5); padding: 15px; border-radius: 10px; margin: 10px 0;">
+                <p><strong>🔵 順転「蒼」：</strong></p>
+                <div style="display: flex; align-items: center; gap: 10px; margin: 10px 0;">
+                    <img src="images/Go_ao.png" style="width: 60px; height: 60px; object-fit: contain;">
+                    <span style="font-size: 24px;">→</span>
+                    <img src="images/fruit_4.png" style="width: 50px; height: 50px; object-fit: contain;">
+                    <span style="font-size: 16px;">以下を消去</span>
+                </div>
+                <p style="font-size: 14px; margin: 5px 0 0 0;">タップで周囲のボールを消去</p>
+            </div>
+            
+            <div style="background: rgba(255, 240, 255, 0.5); padding: 15px; border-radius: 10px; margin: 10px 0;">
+                <p><strong>🟣 虚式「茈」：</strong></p>
+                <div style="display: flex; align-items: center; gap: 10px; margin: 10px 0;">
+                    <img src="images/Go_aka.png" style="width: 50px; height: 50px; object-fit: contain;">
+                    <span style="font-size: 24px;">+</span>
+                    <img src="images/Go_ao.png" style="width: 50px; height: 50px; object-fit: contain;">
+                    <span style="font-size: 24px;">→</span>
+                    <img src="images/Go_murasaki.png" style="width: 60px; height: 60px; object-fit: contain;">
+                </div>
+                <ul style="margin-top: 10px;">
+                    <li><strong>反転「赫」と順転「蒼」が接触すると虚式「茈」に変化</strong></li>
+                    <li><strong>虚式「茈」をタップすると超広範囲を消去</strong></li>
+                    <li style="display: flex; align-items: center; gap: 5px; margin-top: 10px;">
+                        <img src="images/Go_murasaki.png" style="width: 50px; height: 50px; object-fit: contain;">
+                        <span style="font-size: 20px;">→</span>
+                        <img src="images/fruit_4.png" style="width: 40px; height: 40px; object-fit: contain;">
+                        <span style="font-size: 14px;">以下を超広範囲で消去</span>
+                    </li>
+                </ul>
+            </div>
+            
+            <p style="margin-top: 15px;"><strong>⚠️ 注意：</strong></p>
+            <ul>
+                <li>術式ボールは通常のボールと合体しない</li>
+                <li>消したボールのスコアを獲得</li>
+            </ul>
+            
+            <button id="closeHowToPlayGojo">閉じる</button>
+        </div>
+    </div>
+
+    <!-- 難易度選択画面 -->
+    <div id="difficultyScreen">
+        <div id="difficultyBox">
+            <h2>モードを選択</h2>
+            <button class="difficulty-button" id="normalButton">ノーマル</button>
+            <p class="difficulty-description">標準の難易度</p>
+            <button class="difficulty-button" id="easyButton">やさしい</button>
+            <p class="difficulty-description">ボールが0.7倍のサイズ</p>
+            <button class="difficulty-button" id="rezeButton">レゼ篇</button>
+            <p class="difficulty-description">デンジ君の心臓 貰うね？</p>
+            <button class="difficulty-button" id="gojoButton">五条篇</button>
+            <p class="difficulty-description">大丈夫 僕 最強だから</p>
+            <div style="margin-top: 20px;"></div>
+            <button class="difficulty-button" id="highScoreButton" style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4); width: 80%; padding: 12px 28px; font-size: 14px;">ハイスコア一覧</button>
+            <button class="difficulty-button" id="rankingButton" style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4); width: 80%; padding: 12px 28px; font-size: 14px;">オンラインランキング</button>
+        </div>
+        <div id="versionLabel">v.5.0</div>
+    </div>
+
+    <!-- ハイスコア一覧画面 -->
+    <div id="highScoreScreen">
+        <div id="highScoreBox">
+            <h2>📊 ハイスコア一覧</h2>
+            <div id="playerNameContainer" style="margin-bottom: 8px; text-align: center;">
+                <div id="playerNameDisplay" style="display: none; padding: 10px; background: rgba(255, 248, 230, 0.8); border-radius: 10px; text-align: center; font-weight: bold; color: #D2691E; font-size: 16px; cursor: pointer;"></div>
+                <div id="playerNameInputContainer" style="display: none;">
+                    <input type="text" id="playerNameInput" maxlength="10" placeholder="名前を入力" style="padding: 8px; border: 2px solid #D2691E; border-radius: 5px; font-size: 14px; text-align: center; width: 200px;">
+                </div>
+            </div>
+            <div style="text-align: center; margin-bottom: 15px;">
+                <p style="font-size: 10px; color: #8B4513; opacity: 0.7; margin: 0; line-height: 1.5;">※ランキング表示名に反映されます。<br>※ネームをタップすると変更することが可能です。</p>
+            </div>
+            <div id="highScoreList">
+                <div class="high-score-section">
+                    <h3>通常難易度</h3>
+                    <div class="high-score-item">
+                        <span class="difficulty-name">ノーマル</span>
+                        <span class="score-value" id="highScore_normal">0</span>
+                    </div>
+                    <div class="high-score-item">
+                        <span class="difficulty-name">やさしい</span>
+                        <span class="score-value" id="highScore_easy">0</span>
+                    </div>
+                </div>
+                <div class="high-score-divider"></div>
+                <div class="high-score-section">
+                    <h3>特別編</h3>
+                    <div class="high-score-item">
+                        <span class="difficulty-name">レゼ篇</span>
+                        <span class="score-value" id="highScore_reze">0</span>
+                    </div>
+                    <div class="high-score-item">
+                        <span class="difficulty-name">五条篇</span>
+                        <span class="score-value" id="highScore_gojo">0</span>
+                    </div>
+                </div>
+            </div>
+            <button id="syncToRanking" style="width: 100%; background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); color: white; border: none; padding: 12px; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; margin-bottom: 10px;">🏆 ランキングに反映</button>
+            <button id="closeHighScore">閉じる</button>
+        </div>
+    </div>
+
+    <!-- オンラインランキング画面 -->
+    <div id="rankingScreen">
+        <div id="rankingBox">
+            <h2>🏆 オンラインランキング</h2>
+            <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+                <button class="ranking-type-btn active" data-type="normal" style="flex: 1; padding: 10px; background: #D2691E; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer;">オールタイム</button>
+                <button class="ranking-type-btn" data-type="event" style="flex: 1; padding: 10px; background: rgba(210, 105, 30, 0.3); color: #8B4513; border: 2px solid #D2691E; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer; line-height: 1.3;">常設イベント「幻惑の海域」<br>(22:00~2:00)</button>
+            </div>
+            <div id="rankingModeSelect">
+                <button class="ranking-mode-btn active" data-mode="normal">ノーマル</button>
+                <button class="ranking-mode-btn" data-mode="easy">やさしい</button>
+                <button class="ranking-mode-btn" data-mode="reze">レゼ篇</button>
+                <button class="ranking-mode-btn" data-mode="gojo">五条篇</button>
+            </div>
+            <div id="rankingList">
+                <div class="loading">読み込み中...</div>
+            </div>
+            <p style="font-size: 10px; color: #8B4513; opacity: 0.7; text-align: center; margin: 8px 0;">※通常は5分ごとに読み込み更新しています。<br>イベントは特定時間のランキングで、毎日更新されます。</p>
+            <div style="display: flex; gap: 10px;">
+                <button id="refreshRanking" style="flex: 1; background: #B8D4C8; color: #4A6B5C; border: 2px solid #8BA99E; padding: 10px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer;">表示更新</button>
+                <button id="closeRanking" style="flex: 1; background: #E8D4C8; color: #8B6B5C; border: 2px solid #C8A99E; padding: 10px; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer;">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- スタート画面 -->
+    <div id="startScreen">
+        <div id="startBox">
+            <h2>🍉 ウォーターメロンゲーム</h2>
+            <p>同じキャラクターを合体させよう！</p>
+            <button id="startButton">ゲーム開始</button>
+        </div>
+    </div>
+
+    <div id="gameContainer">
+        <div id="topPanel">
+            <div class="info-bubble">
+                <span class="info-value" id="scoreValue" style="font-size: 14px;">スコア：000000</span>
+                <span class="best-score-label" id="bestScoreValue" style="font-size: 11px; white-space: nowrap;">Best: 000000</span>
+            </div>
+            <div id="nextBall">
+                <h3>ネクスト</h3>
+                <div id="nextPreview"></div>
+            </div>
+            <button id="gameRestartButton">リスタート</button>
+        </div>
+        <div id="gameArea">
+            <div id="canvasWrapper">
+                <canvas id="gameCanvas"></canvas>
+                <div class="game-line"></div>
+                <div id="gameOver">
+                    <h2>ゲームオーバー</h2>
+                    <p>スコア: <span id="finalScore">0</span></p>
+                    <button id="restartBtn">リスタート</button>
+                </div>
+            </div>
+            <div id="tapSafeZone">← タップ移動エリア →</div>
+            <div id="sinkaBar">
+                <div id="sinkaBarImage">
+                    <span class="placeholder-text">画像を配置</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- デバッグボタン（左下） -->
+    <button id="debugButton">🔧</button>
+
+    <!-- デバッグパネル -->
+    <div id="debugPanel">
+        <h3>🔧 デバッグモード</h3>
+        <input type="password" id="debugPasswordInput" placeholder="パスワードを入力" />
+        <div id="debugPasswordError"></div>
+        <div id="debugButtons" style="display: none;">
+            <button id="debugCongrats">🎉 Congratulations演出</button>
+            <button id="debugGameOver">💀 ゲームオーバー</button>
+            <button id="debugSpawnFruit9">🍇 fruit_9を出現</button>
+            <button id="debugSpawnFruit10">🍉 fruit_10を出現</button>
+            <hr style="margin: 10px 0; border: 1px solid #D2B48C;">
+            <div style="font-size: 12px; color: #8B4513; margin: 5px 0;">💣 レゼ篇設定</div>
+            <button id="debugToggleEffect">エフェクト: ON</button>
+            <div style="font-size: 11px; margin: 5px 0;">
+                <label>ボム出現率: <input type="number" id="debugBombRate" value="10" min="1" max="20" style="width: 50px;"> 回に1回</label>
+            </div>
+            <div style="font-size: 11px; margin: 5px 0;">
+                <label>爆発範囲: ×<input type="number" id="debugExplosionRadius" value="3" min="1" max="10" step="0.5" style="width: 50px;"></label>
+            </div>
+        </div>
+        <button id="debugClose">閉じる</button>
+    </div>
+
+    <script>
+        console.log('=== Script Start ===');
+        
+        // ====================
+        // ランキングAPI設定
+        // ====================
+        const RANKING_API_URL = 'https://script.google.com/macros/s/AKfycbwQAOtGPkW5r92MuXgIl63bP_w1P-v9CdbzjGnFcKtulAzgqjQvw6K3zR-ckekztfHs/exec';
+        
+        // 端末固有IDを取得または生成
+        function getDeviceId() {
+            let deviceId = localStorage.getItem('watermelonDeviceId');
+            if (!deviceId) {
+                // 新規生成: タイムスタンプ + ランダム値
+                deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
+                localStorage.setItem('watermelonDeviceId', deviceId);
+                console.log('New device ID created:', deviceId);
+            }
+            return deviceId;
+        }
+        
+        const DEVICE_ID = getDeviceId();
+        console.log('Device ID:', DEVICE_ID);
+        
+        // ====================
+        // 初期化
+        // ====================
+        const difficultyScreen = document.getElementById('difficultyScreen');
+        const howToPlayScreen = document.getElementById('howToPlayScreen');
+        const howToPlayScreenReze = document.getElementById('howToPlayScreenReze');
+        const howToPlayScreenGojo = document.getElementById('howToPlayScreenGojo');
+        const rankingScreen = document.getElementById('rankingScreen');
+        
+        console.log('difficultyScreen:', difficultyScreen);
+        console.log('howToPlayScreen:', howToPlayScreen);
+        console.log('rankingScreen:', rankingScreen);
+        
+        // 初回訪問チェック
+        const hasVisited = localStorage.getItem('watermelonGameVisited');
+        console.log('hasVisited:', hasVisited);
+        
+        // 初回訪問なら遊び方を表示
+        function showHowToPlayIfFirstTime() {
+            if (!hasVisited) {
+                console.log('Showing how to play');
+                howToPlayScreen.classList.add('active');
+                localStorage.setItem('watermelonGameVisited', 'true');
+            }
+        }
+        
+        function showDifficultyScreen() {
+            console.log('Showing difficulty screen');
+            difficultyScreen.classList.add('active');
+        }
+        
+        // ページ読み込み時に難易度選択を表示
+        showHowToPlayIfFirstTime();
+        showDifficultyScreen();
+        console.log('=== Initialization Complete ===');
+
+        // ====================
+        // Matter.js 物理エンジン設定
+        // ====================
+        console.log('=== Loading Matter.js ===');
+        console.log('Matter:', typeof Matter);
+        
+        if (typeof Matter === 'undefined') {
+            console.error('Matter.js is not loaded!');
+            alert('Matter.jsの読み込みに失敗しました。ページをリロードしてください。');
+        }
+        
+        const { Engine, Render, Runner, Bodies, Composite, Events, Body, Sleeping } = Matter;
+        
+        const canvas = document.getElementById('gameCanvas');
+        const wrapper = document.getElementById('canvasWrapper');
+        const gameContainer = document.getElementById('gameContainer');
+        
+        // キャンバスサイズ（固定）
+        let WIDTH = 500;
+        let HEIGHT = 550; // 1.1倍
+        const WALL_T = 10;
+        const GAME_LINE_RATIO = 0.15;
+        
+        // 物理エンジン作成
+        const engine = Engine.create({
+            constraintIterations: 5,
+            positionIterations: 10,
+            velocityIterations: 8,
+            gravity: { x: 0, y: 0.9 }  // 重力設定
+        });
+        
+        // レンダラー作成（Matter.jsのデフォルトレンダラーを使用）
+        const render = Render.create({
+            canvas: canvas,
+            engine: engine,
+            options: {
+                width: WIDTH,
+                height: HEIGHT,
+                wireframes: false,
+                background: 'linear-gradient(180deg, #FFF8E7 0%, #F5E6D3 100%)'
+            }
+        });
+        
+        const runner = Runner.create({
+            delta: 1000 / 60 * 4  // 通常の4倍速
+        });
+        
+        // ====================
+        // 画像設定
+        // ====================
+        const FRUIT_IMAGES = {
+            0: 'images/fruit_0.png',
+            1: 'images/fruit_1.png',
+            2: 'images/fruit_2.png',
+            3: 'images/fruit_3.png',
+            4: 'images/fruit_4.png',
+            5: 'images/fruit_5.png',
+            6: 'images/fruit_6.png',
+            7: 'images/fruit_7.png',
+            8: 'images/fruit_8.png',
+            9: 'images/fruit_9.png',
+            10: 'images/fruit_10.png'
+        };
+        
+        const SINKA_BAR_IMAGE = 'images/sinka_bar.png';
+        const BOMB_IMAGE = 'images/bakudan_dynamite.png';
+        const EXPLOSION_IMAGE = 'images/bakuhatsu.png';
+        
+        // 五条篇の画像
+        const GO_AKA_IMAGE = 'images/Go_aka.png';
+        const GO_AO_IMAGE = 'images/Go_ao.png';
+        const GO_MURASAKI_IMAGE = 'images/Go_murasaki.png';
+        const GO_AKA_MOJI_IMAGE = 'images/Go_aka_moji.png';
+        const GO_AO_MOJI_IMAGE = 'images/Go_ao_moji.png';
+        const GO_MURASAKI_MOJI_IMAGE = 'images/Go_murasaki_moji.png';
+        
+        const fruitImageObjects = {};
+        let sinkaBarImageObject = null;
+        let bombImageObject = null;
+        let explosionImageObject = null;
+        let goAkaImageObject = null;
+        let goAoImageObject = null;
+        let goMurasakiImageObject = null;
+        
+        // 画像プリロード
+        function preloadImages() {
+            for (let key in FRUIT_IMAGES) {
+                if (FRUIT_IMAGES[key]) {
+                    const img = new Image();
+                    img.src = FRUIT_IMAGES[key];
+                    fruitImageObjects[key] = img;
+                }
+            }
+            
+            if (SINKA_BAR_IMAGE) {
+                sinkaBarImageObject = new Image();
+                sinkaBarImageObject.onload = () => {
+                    const sinkaBarImg = document.getElementById('sinkaBarImage');
+                    sinkaBarImg.innerHTML = '';
+                    const imgElement = document.createElement('img');
+                    imgElement.src = SINKA_BAR_IMAGE;
+                    sinkaBarImg.appendChild(imgElement);
+                };
+                sinkaBarImageObject.src = SINKA_BAR_IMAGE;
+            }
+            
+            // ボム画像
+            if (BOMB_IMAGE) {
+                bombImageObject = new Image();
+                bombImageObject.src = BOMB_IMAGE;
+            }
+            
+            // 爆発エフェクト画像
+            if (EXPLOSION_IMAGE) {
+                explosionImageObject = new Image();
+                explosionImageObject.src = EXPLOSION_IMAGE;
+            }
+            
+            // 五条篇の画像
+            if (GO_AKA_IMAGE) {
+                goAkaImageObject = new Image();
+                goAkaImageObject.src = GO_AKA_IMAGE;
+            }
+            
+            if (GO_AO_IMAGE) {
+                goAoImageObject = new Image();
+                goAoImageObject.src = GO_AO_IMAGE;
+            }
+            
+            if (GO_MURASAKI_IMAGE) {
+                goMurasakiImageObject = new Image();
+                goMurasakiImageObject.src = GO_MURASAKI_IMAGE;
+            }
+        }
+        
+        preloadImages();
+        
+        // ====================
+        // ゲーム設定
+        // ====================
+        const BALL_COLORS = [
+            '#FFE66D', '#FFB347', '#FF6B6B', '#C77DFF', '#FFD93D',
+            '#FF8C42', '#4ECDC4', '#95E1D3', '#F38181', '#FFEB3B', '#FFD700'
+        ];
+        
+        // 各ボールの直径比率（横幅1.000に対する比率）
+        // 【調整版】実践調整済み（6〜9調整入り）
+        const BALL_DIAMETER_RATIOS = [
+            0.068,  // fruit_0
+            0.098,  // fruit_1
+            0.117,  // fruit_2
+            0.144,  // fruit_3
+            0.180,  // fruit_4
+            0.228,  // fruit_5
+            0.241,  // fruit_6 ← 調整（0.267 → 0.241）
+            0.272,  // fruit_7 ← 調整（0.340 → 0.272）
+            0.275,  // fruit_8 ← 調整（0.366 → 0.275）
+            0.320,  // fruit_9 ← 調整（0.457 → 0.320）
+            0.389   // fruit_10 ← 調整（0.556 → 0.389 = 0.556 * 0.7）
+        ];
+        
+        /* 【未調整版】理論値（記録用）
+        const BALL_DIAMETER_RATIOS = [
+            0.068,  // fruit_0
+            0.098,  // fruit_1
+            0.117,  // fruit_2
+            0.144,  // fruit_3
+            0.180,  // fruit_4
+            0.228,  // fruit_5
+            0.267,  // fruit_6
+            0.340,  // fruit_7
+            0.366,  // fruit_8
+            0.457,  // fruit_9
+            0.556   // fruit_10
+        ];
+        */
+        
+        function getBallSize(type) {
+            // 横幅に対する比率から直径を計算し、半径に変換
+            const diameter = WIDTH * BALL_DIAMETER_RATIOS[type];
+            const radius = diameter / 2;
+            return radius * ballSizeMultiplier; // 難易度による倍率を適用
+        }
+        
+        // ゲーム状態
+        let score = 0;
+        
+        // 難易度別スコア管理
+        const DIFFICULTY_KEYS = {
+            easy: 'watermelonScore_easy',
+            normal: 'watermelonScore_normal',
+            hard: 'watermelonScore_hard',
+            reze: 'watermelonScore_reze',
+            gojo: 'watermelonScore_gojo'
+        };
+        
+        // 難易度別の最高スコアを取得
+        function getBestScore(difficulty) {
+            const key = DIFFICULTY_KEYS[difficulty];
+            return parseInt(localStorage.getItem(key)) || 0;
+        }
+        
+        // 難易度別の最高スコアを保存
+        function saveBestScore(difficulty, score) {
+            const key = DIFFICULTY_KEYS[difficulty];
+            const currentBest = getBestScore(difficulty);
+            if (score > currentBest) {
+                localStorage.setItem(key, score);
+                return true; // 新記録
+            }
+            return false;
+        }
+        
+        let worldRecord = 0; // 現在の難易度の最高スコア（ゲーム開始時に設定）
+        let nextBallType = 0;
+        let currentBall = null;
+        let droppedBall = null; // 落下中のボールを追跡
+        let isGameOver = false;
+        let canPut = false; // 最初はゲーム開始まで落とせない
+        let gameStarted = false; // ゲームが開始されたか
+        let isTouching = false; // タッチ中かどうか
+        let mouseX = WIDTH / 2;
+        
+        // 難易度設定
+        let currentDifficulty = 'normal'; // 'normal', 'easy', 'hard', or 'reze'
+        let ballSizeMultiplier = 1.0; // ボールサイズの倍率
+        let fieldHeightRatio = 1.1; // フィールドの高さ比率（横幅に対して）
+        
+        // レゼ篇モード設定
+        let isRezeMode = false; // レゼ篇モードかどうか
+        let bombSpawnCounter = 0; // ボム出現カウンター
+        let bombSpawnRate = 10; // ボム出現確率（10回に1回）
+        let explosionRadius = 3; // 爆発範囲（ボム半径の倍数）
+        let explosionEffectEnabled = true; // 爆発エフェクトのオン/オフ
+        
+        // 五条篇モード設定
+        let isGojoMode = false; // 五条篇モードかどうか
+        let gojoSpawnCounter = 0; // 赤/青ボール出現カウンター
+        let gojoSpawnRate = 17; // 赤/青ボール出現確率
+        let gojoExplosionRadius = 3; // 赤/青の爆発範囲
+        let murasakiExplosionRadius = 24; // 紫の爆発範囲（ボムの8倍）
+        
+        // やさしいモード開放チェック
+        const normalPlayCount = parseInt(localStorage.getItem('watermelonNormalPlayCount')) || 0;
+        const easyButton = document.getElementById('easyButton');
+        
+        // やさしいモードは常に開放
+        easyButton.classList.remove('locked');
+        easyButton.textContent = 'やさしい';
+        
+        // スコア更新
+        function updateScore() {
+            document.getElementById('scoreValue').textContent = `スコア：${score}`;
+            document.getElementById('bestScoreValue').textContent = `Best: ${worldRecord}`;
+            
+            if (score > worldRecord) {
+                worldRecord = score;
+                document.getElementById('bestScoreValue').textContent = `Best: ${worldRecord}`;
+            }
+        }
+        
+        // 次のボールプレビュー
+        function updateNextPreview() {
+            const preview = document.getElementById('nextPreview');
+            preview.innerHTML = '';
+            
+            if (nextBallType === 'go_aka') {
+                // 赤ボールプレビュー
+                if (goAkaImageObject) {
+                    const img = document.createElement('img');
+                    img.src = goAkaImageObject.src;
+                    preview.appendChild(img);
+                } else {
+                    preview.style.backgroundColor = '#FF0000';
+                    preview.textContent = '赤';
+                }
+            } else if (nextBallType === 'go_ao') {
+                // 青ボールプレビュー
+                if (goAoImageObject) {
+                    const img = document.createElement('img');
+                    img.src = goAoImageObject.src;
+                    preview.appendChild(img);
+                } else {
+                    preview.style.backgroundColor = '#0000FF';
+                    preview.textContent = '青';
+                }
+            } else if (nextBallType === 'bomb') {
+                // ボムプレビュー
+                if (bombImageObject) {
+                    const img = document.createElement('img');
+                    img.src = bombImageObject.src;
+                    preview.appendChild(img);
+                } else {
+                    preview.style.backgroundColor = '#8B4513';
+                    preview.textContent = '💣';
+                }
+            } else if (fruitImageObjects[nextBallType]) {
+                const img = document.createElement('img');
+                img.src = fruitImageObjects[nextBallType].src;
+                preview.appendChild(img);
+            } else {
+                preview.style.backgroundColor = BALL_COLORS[nextBallType];
+                preview.textContent = nextBallType;
+            }
+        }
+        
+        function getRandomBallType() {
+            // レゼ篇モードの場合、ボム出現判定
+            if (isRezeMode) {
+                bombSpawnCounter++;
+                
+                // 3回目は必ずボム
+                if (bombSpawnCounter === 3) {
+                    return 'bomb';
+                }
+                
+                // それ以降は7回に1回ボム
+                if (bombSpawnCounter > 3 && bombSpawnCounter % bombSpawnRate === 0) {
+                    return 'bomb';
+                }
+            }
+            
+            // 五条篇モードの場合、赤/青ボール出現判定
+            if (isGojoMode) {
+                gojoSpawnCounter++;
+                
+                // 3回目は必ず赤
+                if (gojoSpawnCounter === 3) {
+                    return 'go_aka';
+                }
+                
+                // 4回目は必ず青
+                if (gojoSpawnCounter === 4) {
+                    return 'go_ao';
+                }
+                
+                // それ以降は10回に1回赤または青
+                if (gojoSpawnCounter > 4 && gojoSpawnCounter % gojoSpawnRate === 0) {
+                    return Math.random() < 0.5 ? 'go_aka' : 'go_ao';
+                }
+            }
+            
+            return Math.floor(Math.random() * 5);
+        }
+        
+        // ====================
+        // ゲーム初期化
+        // ====================
+        function initGame() {
+            // canvasサイズは固定（WIDTH, HEIGHTは変更しない）
+            canvas.width = WIDTH;
+            canvas.height = HEIGHT;
+            render.options.width = WIDTH;
+            render.options.height = HEIGHT;
+            
+            // ゲームオーバーライン位置（固定）
+            const gameLine = document.querySelector('.game-line');
+            gameLine.style.top = (550 * 0.15) + 'px'; // HEIGHT * GAME_LINE_RATIO
+            
+            // ワールドをクリア
+            Composite.clear(engine.world);
+            
+            // 壁と床を作成
+            const ground = Bodies.rectangle(WIDTH / 2, HEIGHT - WALL_T / 2, WIDTH, WALL_T, {
+                isStatic: true,
+                render: { fillStyle: '#D2B48C' }
+            });
+            
+            const leftWall = Bodies.rectangle(WALL_T / 2, HEIGHT / 2, WALL_T, HEIGHT, {
+                isStatic: true,
+                render: { fillStyle: '#D2B48C' }
+            });
+            
+            const rightWall = Bodies.rectangle(WIDTH - WALL_T / 2, HEIGHT / 2, WALL_T, HEIGHT, {
+                isStatic: true,
+                render: { fillStyle: '#D2B48C' }
+            });
+            
+            Composite.add(engine.world, [ground, leftWall, rightWall]);
+            
+            // 状態リセット
+            score = 0;
+            isGameOver = false;
+            canPut = false; // スタートボタンを押すまで待つ
+            gameStarted = false;
+            currentBall = null;
+            droppedBall = null;
+            nextBallType = getRandomBallType();
+            
+            updateScore();
+            updateNextPreview();
+            
+            // 最高スコアを表示
+            document.getElementById('bestScoreValue').textContent = `Best: ${worldRecord}`;
+            
+            // レンダラーとランナーを停止してから再起動
+            Runner.stop(runner);
+            Render.stop(render);
+            
+            Render.run(render);
+            Runner.run(runner, engine);
+            
+            // イベント登録
+            setupEvents();
+        }
+        
+        // 難易度選択ボタン処理
+        document.getElementById('normalButton').addEventListener('click', () => {
+            currentDifficulty = 'normal';
+            ballSizeMultiplier = 1.0;
+            fieldHeightRatio = 1.1;
+            isRezeMode = false;
+            isGojoMode = false;
+            worldRecord = getBestScore('normal');
+            
+            // Best表示を初期化
+            document.getElementById('bestScoreValue').textContent = `Best: ${worldRecord}`;
+            
+            difficultyScreen.classList.remove('active');
+            gameContainer.classList.add('active');
+            document.getElementById('startScreen').classList.add('active');
+            initGame();
+        });
+        
+        document.getElementById('easyButton').addEventListener('click', () => {
+            currentDifficulty = 'easy';
+            ballSizeMultiplier = 0.7;
+            fieldHeightRatio = 1.1;
+            isRezeMode = false;
+            isGojoMode = false;
+            worldRecord = getBestScore('easy');
+            
+            // Best表示を初期化
+            document.getElementById('bestScoreValue').textContent = `Best: ${worldRecord}`;
+            
+            difficultyScreen.classList.remove('active');
+            gameContainer.classList.add('active');
+            document.getElementById('startScreen').classList.add('active');
+            initGame();
+        });
+        
+        document.getElementById('rezeButton').addEventListener('click', () => {
+            currentDifficulty = 'reze';
+            ballSizeMultiplier = 1.0;
+            fieldHeightRatio = 1.1;
+            isRezeMode = true;
+            isGojoMode = false;
+            bombSpawnCounter = 0;
+            worldRecord = getBestScore('reze');
+            
+            // Best表示を初期化
+            document.getElementById('bestScoreValue').textContent = `Best: ${worldRecord}`;
+            
+            difficultyScreen.classList.remove('active');
+            gameContainer.classList.add('active');
+            document.getElementById('startScreen').classList.add('active');
+            initGame();
+        });
+        
+        document.getElementById('gojoButton').addEventListener('click', () => {
+            currentDifficulty = 'gojo';
+            ballSizeMultiplier = 1.0;
+            fieldHeightRatio = 1.1;
+            isRezeMode = false;
+            isGojoMode = true;
+            gojoSpawnCounter = 0;
+            worldRecord = getBestScore('gojo');
+            
+            // Best表示を初期化
+            document.getElementById('bestScoreValue').textContent = `Best: ${worldRecord}`;
+            
+            difficultyScreen.classList.remove('active');
+            gameContainer.classList.add('active');
+            document.getElementById('startScreen').classList.add('active');
+            initGame();
+        });
+        
+        // スタートボタン処理
+        document.getElementById('startButton').addEventListener('click', () => {
+            document.getElementById('startScreen').classList.remove('active');
+            gameStarted = true;
+            canPut = true;
+            createNewBall(); // 最初のボールを表示
+        });
+        
+        // ====================
+        // イベント設定
+        // ====================
+        function setupEvents() {
+            // 衝突イベント
+            Events.on(engine, 'collisionStart', handleCollision);
+            
+            // ゲームオーバー判定
+            Events.on(engine, 'afterUpdate', checkGameOver);
+        }
+        
+        // 衝突処理
+        function handleCollision({ pairs }) {
+            for (const pair of pairs) {
+                const { bodyA, bodyB } = pair;
+                
+                // 落下中のボールが何かに触れたら次のボールを出せるようにする
+                if (droppedBall && (bodyA.id === droppedBall.id || bodyB.id === droppedBall.id)) {
+                    droppedBall = null;
+                    
+                    // 短いインターバル後に次のボールを出す
+                    setTimeout(() => {
+                        canPut = true;
+                        createNewBall();
+                    }, 100);
+                }
+                
+                if (!Composite.get(engine.world, bodyA.id, 'body') ||
+                    !Composite.get(engine.world, bodyB.id, 'body')) {
+                    continue;
+                }
+                
+                // ボムは合成しない
+                if (bodyA.label === 'bomb' || bodyB.label === 'bomb') {
+                    continue;
+                }
+                
+                // 赤ボール・青ボール・紫ボールは合成しない（紫のみ例外処理）
+                if (bodyA.label === 'go_aka' && bodyB.label === 'go_aka') {
+                    continue;
+                }
+                if (bodyA.label === 'go_ao' && bodyB.label === 'go_ao') {
+                    continue;
+                }
+                if (bodyA.label === 'go_murasaki' || bodyB.label === 'go_murasaki') {
+                    continue;
+                }
+                
+                // 赤+青→紫への変化
+                if ((bodyA.label === 'go_aka' && bodyB.label === 'go_ao') ||
+                    (bodyA.label === 'go_ao' && bodyB.label === 'go_aka')) {
+                    
+                    const newX = (bodyA.position.x + bodyB.position.x) / 2;
+                    const newY = (bodyA.position.y + bodyB.position.y) / 2;
+                    const murasakiSize = getBallSize(3); // fruit_3相当
+                    
+                    const murasakiBall = Bodies.circle(newX, newY, murasakiSize, {
+                        label: 'go_murasaki',
+                        restitution: 0.2,
+                        friction: 0.5,
+                        frictionAir: 0.01,
+                        density: 0.002,
+                        slop: 0.05,
+                        render: {
+                            sprite: goMurasakiImageObject ? {
+                                texture: GO_MURASAKI_IMAGE,
+                                xScale: (murasakiSize * 2) / 500,
+                                yScale: (murasakiSize * 2) / 500
+                            } : {
+                                fillStyle: '#8B00FF'
+                            }
+                        }
+                    });
+                    
+                    Composite.remove(engine.world, [bodyA, bodyB]);
+                    Composite.add(engine.world, murasakiBall);
+                    continue;
+                }
+                
+                // isSleeping状態のボール（操作中の半透明ボール）は合成しない
+                if (bodyA.isSleeping || bodyB.isSleeping) {
+                    continue;
+                }
+                
+                if (bodyA.label === bodyB.label && bodyA.label.startsWith('bubble_')) {
+                    const currentLevel = Number(bodyA.label.substring(7));
+                    
+                    // スコア加算
+                    score += Math.pow(2, currentLevel + 1);
+                    
+                    // fruit_9 × 2の場合、5000点ボーナス
+                    if (currentLevel === 9) {
+                        const bonus = 5000;
+                        score += bonus;
+                    }
+                    
+                    updateScore();
+                    
+                    if (currentLevel === 10) {
+                        // fruit_10同士が合成された場合：消えるのみ
+                        // ボールを削除
+                        Composite.remove(engine.world, [bodyA, bodyB]);
+                        continue;
+                    }
+                    
+                    const newLevel = currentLevel + 1;
+                    const newX = (bodyA.position.x + bodyB.position.x) / 2;
+                    const newY = (bodyA.position.y + bodyB.position.y) / 2;
+                    const newRadius = getBallSize(newLevel);
+                    
+                    const newBall = Bodies.circle(newX, newY, newRadius, {
+                        label: 'bubble_' + newLevel,
+                        restitution: 0.2,
+                        friction: 0.5,
+                        frictionAir: 0.01,
+                        density: 0.002,
+                        slop: 0.05,
+                        render: {
+                            fillStyle: BALL_COLORS[newLevel],
+                            sprite: fruitImageObjects[newLevel] ? {
+                                texture: FRUIT_IMAGES[newLevel],
+                                xScale: (newRadius * 2) / 500,
+                                yScale: (newRadius * 2) / 500
+                            } : undefined
+                        }
+                    });
+                    
+                    Composite.remove(engine.world, [bodyA, bodyB]);
+                    Composite.add(engine.world, [newBall]);
+                    
+                    // fruit_10が生成された場合、お祝い演出を表示
+                    if (newLevel === 10) {
+                        showCongratulations();
+                    }
+                }
+            }
+        }
+        
+        // ゲームオーバー判定
+        function checkGameOver() {
+            const gameLineY = HEIGHT * GAME_LINE_RATIO;
+            const bubbles = Composite.allBodies(engine.world).filter(body => 
+                body.label.startsWith('bubble_') && !body.isSleeping  // isSleeping状態（操作中のボール）は除外
+            );
+            
+            for (const bubble of bubbles) {
+                if (bubble.position.y - bubble.circleRadius < gameLineY && bubble.velocity.y < 0) {
+                    Runner.stop(runner);
+                    isGameOver = true;
+                    showGameOver();
+                    break;
+                }
+            }
+        }
+        
+        // ゲームオーバー表示
+        // お祝い演出
+        function showCongratulations() {
+            const congratsScreen = document.getElementById('congratsScreen');
+            const congratsBox = document.getElementById('congratsBox');
+            
+            // 配置待ちの半透明ボールを削除
+            if (currentBall) {
+                Composite.remove(engine.world, currentBall);
+                currentBall = null;
+            }
+            
+            // 画面を表示
+            congratsScreen.classList.add('active');
+            
+            // キラキラエフェクトを追加
+            createSparkles(congratsBox);
+            
+            // ゲーム一時停止
+            canPut = false;
+        }
+        
+        // キラキラエフェクトを生成
+        function createSparkles(container) {
+            const sparkleCount = 30;
+            for (let i = 0; i < sparkleCount; i++) {
+                setTimeout(() => {
+                    const sparkle = document.createElement('div');
+                    sparkle.className = 'sparkle';
+                    
+                    // ランダムな方向に飛ばす
+                    const angle = (Math.PI * 2 * i) / sparkleCount;
+                    const distance = 150 + Math.random() * 100;
+                    const tx = Math.cos(angle) * distance;
+                    const ty = Math.sin(angle) * distance;
+                    
+                    sparkle.style.setProperty('--tx', tx + 'px');
+                    sparkle.style.setProperty('--ty', ty + 'px');
+                    sparkle.style.left = '50%';
+                    sparkle.style.top = '50%';
+                    
+                    container.appendChild(sparkle);
+                    
+                    // アニメーション終了後に削除
+                    setTimeout(() => sparkle.remove(), 1000);
+                }, i * 30);
+            }
+        }
+        
+        // 続けるボタン
+        document.getElementById('congratsContinue').addEventListener('click', () => {
+            document.getElementById('congratsScreen').classList.remove('active');
+            canPut = true;
+            createNewBall();
+        });
+        
+        // ====================
+        // ボム爆発機能
+        // ====================
+        function explodeBomb(bomb) {
+            const bombX = bomb.position.x;
+            const bombY = bomb.position.y;
+            const bombRadius = bomb.circleRadius;
+            const explosionRange = bombRadius * explosionRadius;
+            
+            // 爆発エフェクト表示
+            if (explosionEffectEnabled) {
+                showExplosionEffect(bombX, bombY, explosionRange);
+            }
+            
+            // 周囲のfruit_0〜fruit_4を検出して削除
+            const allBodies = Composite.allBodies(engine.world);
+            const bodiesToRemove = [];
+            
+            for (const body of allBodies) {
+                // 操作中のボール（currentBall）は保護
+                if (body === currentBall) continue;
+                
+                if (body.label.startsWith('bubble_')) {
+                    const level = Number(body.label.substring(7));
+                    
+                    // fruit_0〜fruit_4のみ対象
+                    if (level >= 0 && level <= 4) {
+                        const dx = body.position.x - bombX;
+                        const dy = body.position.y - bombY;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        // 爆発範囲内
+                        if (distance <= explosionRange) {
+                            bodiesToRemove.push(body);
+                            // スコア加算
+                            score += Math.pow(2, level + 1);
+                        }
+                    }
+                }
+            }
+            
+            // ボール削除
+            for (const body of bodiesToRemove) {
+                Composite.remove(engine.world, body);
+            }
+            
+            // ボム自体も削除
+            Composite.remove(engine.world, bomb);
+            
+            // スコア更新
+            updateScore();
+            
+            // 保険：currentBallが消えてしまった場合の復旧
+            if (!currentBall && canPut) {
+                createNewBall();
+            }
+        }
+        
+        // 五条篇：赤・青ボール爆発処理
+        function explodeGojo(gojoBall) {
+            const gojoX = gojoBall.position.x;
+            const gojoY = gojoBall.position.y;
+            const gojoRadius = gojoBall.circleRadius;
+            const explosionRange = gojoRadius * gojoExplosionRadius;
+            
+            // カットイン表示
+            const mojiImage = gojoBall.label === 'go_aka' ? GO_AKA_MOJI_IMAGE : GO_AO_MOJI_IMAGE;
+            showCutIn(mojiImage);
+            
+            // 周囲のfruit_0〜fruit_4を検出して削除
+            const allBodies = Composite.allBodies(engine.world);
+            const bodiesToRemove = [];
+            
+            for (const body of allBodies) {
+                // 操作中のボール（currentBall）は保護
+                if (body === currentBall) continue;
+                
+                // 五条ボールは削除対象外
+                if (body.label === 'go_aka' || body.label === 'go_ao' || body.label === 'go_murasaki') continue;
+                
+                if (body.label.startsWith('bubble_')) {
+                    const level = Number(body.label.substring(7));
+                    
+                    // fruit_0〜fruit_4のみ対象
+                    if (level >= 0 && level <= 4) {
+                        const dx = body.position.x - gojoX;
+                        const dy = body.position.y - gojoY;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        // 爆発範囲内
+                        if (distance <= explosionRange) {
+                            bodiesToRemove.push(body);
+                            // スコア加算
+                            score += Math.pow(2, level + 1);
+                        }
+                    }
+                }
+            }
+            
+            // ボール削除
+            for (const body of bodiesToRemove) {
+                Composite.remove(engine.world, body);
+            }
+            
+            // 五条ボール自体も削除
+            Composite.remove(engine.world, gojoBall);
+            
+            // スコア更新
+            updateScore();
+            
+            // 保険：currentBallが消えてしまった場合の復旧
+            if (!currentBall && canPut) {
+                createNewBall();
+            }
+        }
+        
+        // 五条篇：紫ボール爆発処理
+        function explodeMurasaki(murasakiBall) {
+            const murasakiX = murasakiBall.position.x;
+            const murasakiY = murasakiBall.position.y;
+            const murasakiRadius = murasakiBall.circleRadius;
+            const explosionRange = murasakiRadius * murasakiExplosionRadius;
+            
+            // 白フラッシュ演出
+            showWhiteFlash();
+            
+            // カットイン表示（少し遅延させる）
+            setTimeout(() => {
+                showCutIn(GO_MURASAKI_MOJI_IMAGE);
+            }, 100);
+            
+            // すぐに周囲のボールを削除（拡大アニメーションは削除）
+            setTimeout(() => {
+                // 周囲のfruit_0〜fruit_4を検出して削除
+                const allBodies = Composite.allBodies(engine.world);
+                const bodiesToRemove = [];
+                
+                for (const body of allBodies) {
+                    // 操作中のボール（currentBall）は保護
+                    if (body === currentBall) continue;
+                    
+                    // 五条ボールは削除対象外
+                    if (body.label === 'go_aka' || body.label === 'go_ao' || body.label === 'go_murasaki') continue;
+                    
+                    if (body.label.startsWith('bubble_')) {
+                        const level = Number(body.label.substring(7));
+                        
+                        // fruit_0〜fruit_4のみ対象
+                        if (level >= 0 && level <= 4) {
+                            const dx = body.position.x - murasakiX;
+                            const dy = body.position.y - murasakiY;
+                            const distance = Math.sqrt(dx * dx + dy * dy);
+                            
+                            // 爆発範囲内
+                            if (distance <= explosionRange) {
+                                bodiesToRemove.push(body);
+                                // スコア加算
+                                score += Math.pow(2, level + 1);
+                            }
+                        }
+                    }
+                }
+                
+                // ボール削除
+                for (const body of bodiesToRemove) {
+                    Composite.remove(engine.world, body);
+                }
+                
+                // 紫ボール自体も削除
+                Composite.remove(engine.world, murasakiBall);
+                
+                // スコア更新
+                updateScore();
+                
+                // 保険：currentBallが消えてしまった場合の復旧
+                if (!currentBall && canPut) {
+                    createNewBall();
+                }
+            }, 300); // 白フラッシュとカットインの後に削除
+        }
+        
+        // 爆発エフェクト表示
+        function showExplosionEffect(x, y, radius) {
+            const effectDiv = document.createElement('div');
+            effectDiv.style.position = 'absolute';
+            effectDiv.style.pointerEvents = 'none';
+            effectDiv.style.zIndex = '1000';
+            
+            const rect = canvas.getBoundingClientRect();
+            const canvasX = rect.left + (x / WIDTH) * rect.width;
+            const canvasY = rect.top + (y / HEIGHT) * rect.height;
+            const size = (radius / WIDTH) * rect.width * 2;
+            
+            effectDiv.style.left = (canvasX - size / 2) + 'px';
+            effectDiv.style.top = (canvasY - size / 2) + 'px';
+            effectDiv.style.width = size + 'px';
+            effectDiv.style.height = size + 'px';
+            
+            if (explosionImageObject) {
+                const img = document.createElement('img');
+                img.src = explosionImageObject.src;
+                img.style.width = '100%';
+                img.style.height = '100%';
+                effectDiv.appendChild(img);
+            } else {
+                effectDiv.style.background = 'radial-gradient(circle, rgba(255,255,0,0.8) 0%, rgba(255,100,0,0.4) 50%, transparent 100%)';
+                effectDiv.style.borderRadius = '50%';
+            }
+            
+            document.body.appendChild(effectDiv);
+            
+            // 0.3秒後に削除
+            setTimeout(() => {
+                effectDiv.remove();
+            }, 300);
+        }
+        
+        // カットイン表示
+        function showCutIn(imageUrl) {
+            const cutInDiv = document.createElement('div');
+            cutInDiv.style.position = 'absolute';
+            cutInDiv.style.pointerEvents = 'none';
+            cutInDiv.style.zIndex = '10000';
+            cutInDiv.style.opacity = '0';
+            cutInDiv.style.transition = 'opacity 0.1s';
+            
+            // キャンバスの位置とサイズを取得
+            const rect = canvas.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            
+            const img = document.createElement('img');
+            img.src = imageUrl;
+            img.style.maxWidth = Math.min(rect.width * 0.8, 400) + 'px';
+            img.style.maxHeight = Math.min(rect.height * 0.4, 200) + 'px';
+            img.style.filter = 'drop-shadow(0 0 20px rgba(255,255,255,0.8))';
+            
+            // 画像読み込み完了後に配置
+            img.onload = () => {
+                const imgWidth = img.offsetWidth;
+                const imgHeight = img.offsetHeight;
+                cutInDiv.style.left = (centerX - imgWidth / 2) + 'px';
+                cutInDiv.style.top = (centerY - imgHeight / 2) + 'px';
+                cutInDiv.style.opacity = '1';
+            };
+            
+            // 画像読み込み失敗時もフェードイン（中央に配置）
+            img.onerror = () => {
+                cutInDiv.style.left = centerX + 'px';
+                cutInDiv.style.top = centerY + 'px';
+                cutInDiv.style.transform = 'translate(-50%, -50%)';
+                cutInDiv.style.opacity = '1';
+            };
+            
+            cutInDiv.appendChild(img);
+            document.body.appendChild(cutInDiv);
+            
+            // 0.5秒後にフェードアウト開始
+            setTimeout(() => {
+                cutInDiv.style.opacity = '0';
+            }, 500);
+            
+            // 0.7秒後に削除
+            setTimeout(() => {
+                cutInDiv.remove();
+            }, 700);
+        }
+        
+        // 白フラッシュ演出
+        function showWhiteFlash() {
+            const flashDiv = document.createElement('div');
+            flashDiv.style.position = 'fixed';
+            flashDiv.style.top = '0';
+            flashDiv.style.left = '0';
+            flashDiv.style.width = '100vw';
+            flashDiv.style.height = '100vh';
+            flashDiv.style.backgroundColor = 'white';
+            flashDiv.style.zIndex = '9999';
+            flashDiv.style.pointerEvents = 'none';
+            flashDiv.style.opacity = '1';
+            flashDiv.style.transition = 'opacity 0.4s';
+            
+            document.body.appendChild(flashDiv);
+            
+            // 0.3秒後にフェードアウト開始
+            setTimeout(() => {
+                flashDiv.style.opacity = '0';
+            }, 300);
+            
+            // 0.7秒後に削除
+            setTimeout(() => {
+                flashDiv.remove();
+            }, 700);
+        }
+        
+        // 紫ボールの拡大アニメーション
+        function expandMurasaki(murasakiBall, callback) {
+            const startRadius = murasakiBall.circleRadius;
+            const endRadius = startRadius * 8;
+            const duration = 400; // 0.4秒
+            const startTime = Date.now();
+            
+            function animate() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // イージング（加速）
+                const eased = progress * progress;
+                const currentRadius = startRadius + (endRadius - startRadius) * eased;
+                
+                // ボールのサイズを更新
+                if (Composite.get(engine.world, murasakiBall.id, 'body')) {
+                    Body.scale(murasakiBall, currentRadius / murasakiBall.circleRadius, currentRadius / murasakiBall.circleRadius);
+                    
+                    if (progress < 1) {
+                        requestAnimationFrame(animate);
+                    } else {
+                        callback();
+                    }
+                } else {
+                    callback();
+                }
+            }
+            
+            animate();
+        }
+        
+        function showGameOver() {
+            // 配置待ちの半透明ボールを削除
+            if (currentBall) {
+                Composite.remove(engine.world, currentBall);
+                currentBall = null;
+            }
+            
+            // スコアを保存
+            saveBestScore(currentDifficulty, score);
+            
+            // オンラインランキングにスコアを送信
+            const playerName = localStorage.getItem('watermelonPlayerName') || '名無し';
+            submitScore(currentDifficulty, playerName, score);
+            
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('gameOver').style.display = 'block';
+        }
+        
+        // リスタート
+        document.getElementById('restartBtn').addEventListener('click', () => {
+            document.getElementById('gameOver').style.display = 'none';
+            
+            // 難易度選択に戻る
+            showDifficultyScreen();
+        });
+        
+        // ゲーム画面のリスタートボタン
+        document.getElementById('gameRestartButton').addEventListener('click', () => {
+            if (gameStarted && !isGameOver) {
+                // ゲーム中の場合、確認してゲームオーバーにする
+                if (confirm('ゲームを終了してリスタートしますか？')) {
+                    Runner.stop(runner);
+                    isGameOver = true;
+                    showGameOver();
+                }
+            }
+        });
+        
+        // ====================
+        // ボール配置
+        // ====================
+        const tapSafeZone = document.getElementById('tapSafeZone');
+        
+        canvas.addEventListener('mousemove', (e) => {
+            if (isGameOver || !canPut) return;
+            const rect = canvas.getBoundingClientRect();
+            mouseX = (e.clientX - rect.left) * (WIDTH / rect.width);
+            
+            if (currentBall) {
+                const radius = currentBall.circleRadius;
+                const newX = Math.max(WALL_T + radius, Math.min(WIDTH - WALL_T - radius, mouseX));
+                Body.setPosition(currentBall, { x: newX, y: currentBall.position.y });
+            }
+        });
+        
+        // タップ移動エリアでもボールを移動
+        tapSafeZone.addEventListener('mousemove', (e) => {
+            if (isGameOver || !canPut) return;
+            const canvasRect = canvas.getBoundingClientRect();
+            const tapRect = tapSafeZone.getBoundingClientRect();
+            // タップエリアのX座標をキャンバスのX座標に変換
+            const relativeX = e.clientX - tapRect.left;
+            const canvasX = (relativeX / tapRect.width) * canvasRect.width;
+            mouseX = (canvasX / canvasRect.width) * WIDTH;
+            
+            if (currentBall) {
+                const radius = currentBall.circleRadius;
+                const newX = Math.max(WALL_T + radius, Math.min(WIDTH - WALL_T - radius, mouseX));
+                Body.setPosition(currentBall, { x: newX, y: currentBall.position.y });
+            }
+        });
+        
+        tapSafeZone.addEventListener('touchmove', (e) => {
+            if (isGameOver || !canPut) return;
+            e.preventDefault();
+            const touch = e.touches[0];
+            const canvasRect = canvas.getBoundingClientRect();
+            const tapRect = tapSafeZone.getBoundingClientRect();
+            // タップエリアのX座標をキャンバスのX座標に変換
+            const relativeX = touch.clientX - tapRect.left;
+            const canvasX = (relativeX / tapRect.width) * canvasRect.width;
+            mouseX = (canvasX / canvasRect.width) * WIDTH;
+            
+            if (currentBall) {
+                const radius = currentBall.circleRadius;
+                const newX = Math.max(WALL_T + radius, Math.min(WIDTH - WALL_T - radius, mouseX));
+                Body.setPosition(currentBall, { x: newX, y: currentBall.position.y });
+            }
+        }, { passive: false });
+        
+        // タップ移動エリアでクリックしてボールを落とす
+        tapSafeZone.addEventListener('click', (e) => {
+            if (isGameOver || !canPut) return;
+            if (!currentBall) {
+                createNewBall();
+            } else {
+                dropBall();
+            }
+        });
+        
+        // タップ移動エリアでタッチ終了時にボールを落とす
+        tapSafeZone.addEventListener('touchend', (e) => {
+            if (isGameOver || !canPut) return;
+            e.preventDefault();
+            if (!currentBall) {
+                createNewBall();
+            } else {
+                dropBall();
+            }
+        }, { passive: false });
+        
+        canvas.addEventListener('click', (e) => {
+            if (isGameOver) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const clickX = (e.clientX - rect.left) * (WIDTH / rect.width);
+            const clickY = (e.clientY - rect.top) * (HEIGHT / rect.height);
+            
+            // レゼ篇モード：ボムクリック判定
+            if (isRezeMode) {
+                const allBodies = Composite.allBodies(engine.world);
+                for (const body of allBodies) {
+                    if (body.label === 'bomb') {
+                        const dx = clickX - body.position.x;
+                        const dy = clickY - body.position.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance <= body.circleRadius) {
+                            explodeBomb(body);
+                            return;
+                        }
+                    }
+                }
+            }
+            
+            // 五条篇モード：赤・青・紫ボールクリック判定
+            if (isGojoMode) {
+                const allBodies = Composite.allBodies(engine.world);
+                for (const body of allBodies) {
+                    if (body.label === 'go_aka' || body.label === 'go_ao' || body.label === 'go_murasaki') {
+                        const dx = clickX - body.position.x;
+                        const dy = clickY - body.position.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance <= body.circleRadius) {
+                            if (body.label === 'go_murasaki') {
+                                explodeMurasaki(body);
+                            } else {
+                                explodeGojo(body);
+                            }
+                            return;
+                        }
+                    }
+                }
+            }
+            
+            // 通常のボール配置処理
+            if (!canPut) return;
+            
+            mouseX = clickX;
+            
+            if (!currentBall) {
+                createNewBall();
+            } else {
+                dropBall();
+            }
+        });
+        
+        // タッチ開始
+        canvas.addEventListener('touchstart', (e) => {
+            if (isGameOver) return;
+            e.preventDefault();
+            
+            const rect = canvas.getBoundingClientRect();
+            const touchX = (e.touches[0].clientX - rect.left) * (WIDTH / rect.width);
+            const touchY = (e.touches[0].clientY - rect.top) * (HEIGHT / rect.height);
+            
+            // レゼ篇モード：ボムタップ判定
+            if (isRezeMode) {
+                const allBodies = Composite.allBodies(engine.world);
+                for (const body of allBodies) {
+                    if (body.label === 'bomb') {
+                        const dx = touchX - body.position.x;
+                        const dy = touchY - body.position.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance <= body.circleRadius) {
+                            explodeBomb(body);
+                            return;
+                        }
+                    }
+                }
+            }
+            
+            // 五条篇モード：赤・青・紫ボールタップ判定
+            if (isGojoMode) {
+                const allBodies = Composite.allBodies(engine.world);
+                for (const body of allBodies) {
+                    if (body.label === 'go_aka' || body.label === 'go_ao' || body.label === 'go_murasaki') {
+                        const dx = touchX - body.position.x;
+                        const dy = touchY - body.position.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance <= body.circleRadius) {
+                            if (body.label === 'go_murasaki') {
+                                explodeMurasaki(body);
+                            } else {
+                                explodeGojo(body);
+                            }
+                            return;
+                        }
+                    }
+                }
+            }
+            
+            // 通常のボール配置処理
+            if (!canPut) return;
+            
+            isTouching = true;
+            mouseX = touchX;
+            
+            if (!currentBall) {
+                createNewBall();
+            }
+        });
+        
+        canvas.addEventListener('touchmove', (e) => {
+            if (isGameOver || !canPut || !isTouching) return;
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            mouseX = (e.touches[0].clientX - rect.left) * (WIDTH / rect.width);
+            
+            if (currentBall) {
+                const radius = currentBall.circleRadius;
+                const newX = Math.max(WALL_T + radius, Math.min(WIDTH - WALL_T - radius, mouseX));
+                Body.setPosition(currentBall, { x: newX, y: currentBall.position.y });
+            }
+        });
+        
+        canvas.addEventListener('touchend', (e) => {
+            if (isGameOver || !canPut || !isTouching) return;
+            e.preventDefault();
+            isTouching = false;
+            
+            // 指を離した瞬間にボールを落とす
+            if (currentBall) {
+                dropBall();
+            }
+        });
+        
+        function createNewBall() {
+            // 赤ボールの場合
+            if (nextBallType === 'go_aka') {
+                const akaSize = getBallSize(2); // fruit_2相当のサイズ
+                const x = Math.max(WALL_T + akaSize, Math.min(WIDTH - WALL_T - akaSize, mouseX));
+                
+                currentBall = Bodies.circle(x, 30, akaSize, {
+                    isSleeping: true,
+                    label: 'go_aka',
+                    restitution: 0.2,
+                    friction: 0.5,
+                    frictionAir: 0.01,
+                    density: 0.002,
+                    slop: 0.05,
+                    render: {
+                        sprite: goAkaImageObject ? {
+                            texture: GO_AKA_IMAGE,
+                            xScale: (akaSize * 2) / 500,
+                            yScale: (akaSize * 2) / 500
+                        } : {
+                            fillStyle: '#FF0000'
+                        }
+                    }
+                });
+            } 
+            // 青ボールの場合
+            else if (nextBallType === 'go_ao') {
+                const aoSize = getBallSize(2); // fruit_2相当のサイズ
+                const x = Math.max(WALL_T + aoSize, Math.min(WIDTH - WALL_T - aoSize, mouseX));
+                
+                currentBall = Bodies.circle(x, 30, aoSize, {
+                    isSleeping: true,
+                    label: 'go_ao',
+                    restitution: 0.2,
+                    friction: 0.5,
+                    frictionAir: 0.01,
+                    density: 0.002,
+                    slop: 0.05,
+                    render: {
+                        sprite: goAoImageObject ? {
+                            texture: GO_AO_IMAGE,
+                            xScale: (aoSize * 2) / 500,
+                            yScale: (aoSize * 2) / 500
+                        } : {
+                            fillStyle: '#0000FF'
+                        }
+                    }
+                });
+            }
+            // ボムの場合
+            else if (nextBallType === 'bomb') {
+                const bombSize = getBallSize(2); // fruit_2相当のサイズ
+                const x = Math.max(WALL_T + bombSize, Math.min(WIDTH - WALL_T - bombSize, mouseX));
+                
+                currentBall = Bodies.circle(x, 30, bombSize, {
+                    isSleeping: true,
+                    label: 'bomb',
+                    restitution: 0.2,
+                    friction: 0.5,
+                    frictionAir: 0.01,
+                    density: 0.002,
+                    slop: 0.05,
+                    render: {
+                        sprite: bombImageObject ? {
+                            texture: BOMB_IMAGE,
+                            xScale: (bombSize * 2) / 500,
+                            yScale: (bombSize * 2) / 500
+                        } : {
+                            fillStyle: '#8B4513'
+                        }
+                    }
+                });
+            } else {
+                // 通常のフルーツボール
+                const radius = getBallSize(nextBallType);
+                const x = Math.max(WALL_T + radius, Math.min(WIDTH - WALL_T - radius, mouseX));
+                
+                currentBall = Bodies.circle(x, 30, radius, {
+                    isSleeping: true,
+                    label: 'bubble_' + nextBallType,
+                    restitution: 0.2,
+                    friction: 0.5,
+                    frictionAir: 0.01,
+                    density: 0.002,
+                    slop: 0.05,
+                    render: {
+                        fillStyle: BALL_COLORS[nextBallType],
+                        sprite: fruitImageObjects[nextBallType] ? {
+                            texture: FRUIT_IMAGES[nextBallType],
+                            xScale: (radius * 2) / 500,
+                            yScale: (radius * 2) / 500
+                        } : undefined
+                    }
+                });
+            }
+            
+            Composite.add(engine.world, [currentBall]);
+            
+            // currentBallを作成したら、次のネクストを即座に準備
+            nextBallType = getRandomBallType();
+            updateNextPreview();
+        }
+        
+        function dropBall() {
+            if (!currentBall) return;
+            
+            Sleeping.set(currentBall, false);
+            droppedBall = currentBall; // 落下中のボールを記録
+            currentBall = null;
+            
+            // ボールが他のボールに触れるまで次を出さない
+            canPut = false;
+        }
+        
+        // ====================
+        // 遊び方説明
+        // ====================
+        const howToPlayButton = document.createElement('button');
+        howToPlayButton.id = 'howToPlayButton';
+        howToPlayButton.textContent = '?';
+        document.body.appendChild(howToPlayButton);
+        
+        // 遊び方ボタンをクリック - モードに応じて表示
+        howToPlayButton.addEventListener('click', () => {
+            console.log('❓ボタンクリック - isRezeMode:', isRezeMode, 'isGojoMode:', isGojoMode);
+            if (isRezeMode) {
+                console.log('レゼ篇の説明を表示');
+                howToPlayScreenReze.classList.add('active');
+            } else if (isGojoMode) {
+                console.log('五条篇の説明を表示');
+                howToPlayScreenGojo.classList.add('active');
+            } else {
+                console.log('通常の説明を表示');
+                howToPlayScreen.classList.add('active');
+            }
+        });
+        
+        // 閉じるボタン - 通常
+        document.getElementById('closeHowToPlay').addEventListener('click', () => {
+            howToPlayScreen.classList.remove('active');
+        });
+        
+        // 閉じるボタン - レゼ篇
+        document.getElementById('closeHowToPlayReze').addEventListener('click', () => {
+            howToPlayScreenReze.classList.remove('active');
+        });
+        
+        // 閉じるボタン - 五条篇
+        document.getElementById('closeHowToPlayGojo').addEventListener('click', () => {
+            howToPlayScreenGojo.classList.remove('active');
+        });
+
+        // ====================
+        // デバッグ機能
+        // ====================
+        const DEBUG_PASSWORD = 'suika';
+        const debugButton = document.getElementById('debugButton');
+        const debugPanel = document.getElementById('debugPanel');
+        const debugPasswordInput = document.getElementById('debugPasswordInput');
+        const debugPasswordError = document.getElementById('debugPasswordError');
+        const debugButtons = document.getElementById('debugButtons');
+        let debugUnlocked = false;
+
+        // デバッグボタンクリック
+        debugButton.addEventListener('click', () => {
+            debugPanel.classList.add('active');
+            debugPasswordInput.value = '';
+            debugPasswordError.textContent = '';
+            if (debugUnlocked) {
+                debugPasswordInput.style.display = 'none';
+                debugButtons.style.display = 'block';
+            } else {
+                debugPasswordInput.style.display = 'block';
+                debugButtons.style.display = 'none';
+                debugPasswordInput.focus();
+            }
+        });
+
+        // パスワード入力
+        debugPasswordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                if (debugPasswordInput.value === DEBUG_PASSWORD) {
+                    debugUnlocked = true;
+                    debugPasswordInput.style.display = 'none';
+                    debugButtons.style.display = 'block';
+                    debugPasswordError.textContent = '';
+                } else {
+                    debugPasswordError.textContent = '❌ パスワードが違います';
+                    debugPasswordInput.value = '';
+                    setTimeout(() => {
+                        debugPasswordError.textContent = '';
+                    }, 2000);
+                }
+            }
+        });
+
+        // Congratulations演出
+        document.getElementById('debugCongrats').addEventListener('click', () => {
+            debugPanel.classList.remove('active');
+            showCongratulations();
+        });
+
+        // ゲームオーバー
+        document.getElementById('debugGameOver').addEventListener('click', () => {
+            debugPanel.classList.remove('active');
+            isGameOver = true;
+            showGameOver();
+        });
+
+        // fruit_9を出現
+        document.getElementById('debugSpawnFruit9').addEventListener('click', () => {
+            debugPanel.classList.remove('active');
+            
+            // 既存のcurrentBallがあれば削除
+            if (currentBall) {
+                Composite.remove(engine.world, currentBall);
+                currentBall = null;
+            }
+            
+            const x = WIDTH / 2;
+            const y = HEIGHT * 0.3;
+            const radius = getBallSize(9);
+            
+            const fruit9 = Bodies.circle(x, y, radius, {
+                label: 'bubble_9',
+                restitution: 0.2,
+                friction: 0.5,
+                frictionAir: 0.01,
+                density: 0.002,
+                slop: 0.05,
+                render: {
+                    fillStyle: BALL_COLORS[9],
+                    sprite: fruitImageObjects[9] ? {
+                        texture: FRUIT_IMAGES[9],
+                        xScale: (radius * 2) / 500,
+                        yScale: (radius * 2) / 500
+                    } : null
+                }
+            });
+            
+            Composite.add(engine.world, fruit9);
+            
+            // 状態をリセット
+            canPut = true;
+        });
+
+        // fruit_10を出現
+        document.getElementById('debugSpawnFruit10').addEventListener('click', () => {
+            debugPanel.classList.remove('active');
+            
+            // 既存のcurrentBallがあれば削除
+            if (currentBall) {
+                Composite.remove(engine.world, currentBall);
+                currentBall = null;
+            }
+            
+            const x = WIDTH / 2;
+            const y = HEIGHT * 0.3;
+            const radius = getBallSize(10);
+            
+            const fruit10 = Bodies.circle(x, y, radius, {
+                label: 'bubble_10',
+                restitution: 0.2,
+                friction: 0.5,
+                frictionAir: 0.01,
+                density: 0.002,
+                slop: 0.05,
+                render: {
+                    fillStyle: BALL_COLORS[10],
+                    sprite: fruitImageObjects[10] ? {
+                        texture: FRUIT_IMAGES[10],
+                        xScale: (radius * 2) / 500,
+                        yScale: (radius * 2) / 500
+                    } : null
+                }
+            });
+            
+            Composite.add(engine.world, fruit10);
+            
+            // 状態をリセット
+            canPut = true;
+        });
+
+        // レゼ篇設定の調整
+        document.getElementById('debugToggleEffect').addEventListener('click', () => {
+            explosionEffectEnabled = !explosionEffectEnabled;
+            document.getElementById('debugToggleEffect').textContent = 
+                'エフェクト: ' + (explosionEffectEnabled ? 'ON' : 'OFF');
+        });
+
+        document.getElementById('debugBombRate').addEventListener('change', (e) => {
+            bombSpawnRate = parseInt(e.target.value) || 7;
+        });
+
+        document.getElementById('debugExplosionRadius').addEventListener('change', (e) => {
+            explosionRadius = parseFloat(e.target.value) || 3;
+        });
+
+        // ハイスコア一覧ボタン
+        document.getElementById('highScoreButton').addEventListener('click', () => {
+            updateHighScoreDisplay();
+            document.getElementById('highScoreScreen').classList.add('active');
+        });
+
+        // ハイスコア一覧の表示更新
+        function updateHighScoreDisplay() {
+            document.getElementById('highScore_easy').textContent = getBestScore('easy').toLocaleString();
+            document.getElementById('highScore_normal').textContent = getBestScore('normal').toLocaleString();
+            document.getElementById('highScore_reze').textContent = getBestScore('reze').toLocaleString();
+            document.getElementById('highScore_gojo').textContent = getBestScore('gojo').toLocaleString();
+            
+            // プレイヤー名の表示状態を更新
+            updatePlayerNameDisplay();
+        }
+
+        // プレイヤー名の表示状態を更新
+        function updatePlayerNameDisplay() {
+            const playerName = localStorage.getItem('watermelonPlayerName') || '';
+            const playerNameDisplay = document.getElementById('playerNameDisplay');
+            const playerNameInputContainer = document.getElementById('playerNameInputContainer');
+            
+            if (playerName) {
+                // 名前がある場合は表示欄を表示
+                playerNameDisplay.textContent = `プレイヤー: ${playerName}`;
+                playerNameDisplay.style.display = 'block';
+                playerNameInputContainer.style.display = 'none';
+            } else {
+                // 名前がない場合は入力欄を表示
+                playerNameDisplay.style.display = 'none';
+                playerNameInputContainer.style.display = 'block';
+            }
+        }
+
+        // プレイヤー名表示欄をクリックで編集モードに
+        document.getElementById('playerNameDisplay').addEventListener('click', () => {
+            const playerName = localStorage.getItem('watermelonPlayerName') || '';
+            const playerNameInput = document.getElementById('playerNameInput');
+            const playerNameDisplay = document.getElementById('playerNameDisplay');
+            const playerNameInputContainer = document.getElementById('playerNameInputContainer');
+            
+            playerNameInput.value = playerName;
+            playerNameDisplay.style.display = 'none';
+            playerNameInputContainer.style.display = 'block';
+            playerNameInput.focus();
+        });
+
+        // プレイヤー名の入力処理（フォーカスが外れたら確定）
+        document.getElementById('playerNameInput').addEventListener('blur', (e) => {
+            const playerName = e.target.value.trim();
+            localStorage.setItem('watermelonPlayerName', playerName);
+            updatePlayerNameDisplay();
+        });
+
+        // Enterキーでも確定
+        document.getElementById('playerNameInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.target.blur();
+            }
+        });
+
+        // ハイスコア一覧を閉じる
+        document.getElementById('closeHighScore').addEventListener('click', () => {
+            document.getElementById('highScoreScreen').classList.remove('active');
+        });
+
+        // 閉じるボタン
+        document.getElementById('debugClose').addEventListener('click', () => {
+            debugPanel.classList.remove('active');
+        });
+
+        // ====================
+        // オンラインランキング機能
+        // ====================
+        
+        // ランキング画面を開く
+        document.getElementById('rankingButton').addEventListener('click', () => {
+            rankingScreen.classList.add('active');
+            currentRankingType = 'normal'; // リセット
+            loadRankings('normal', false); // デフォルトでノーマルモード、通常ランキングを表示
+        });
+
+        // ランキング画面を閉じる
+        document.getElementById('closeRanking').addEventListener('click', () => {
+            rankingScreen.classList.remove('active');
+        });
+
+        // 通常/イベント切り替えボタン
+        let currentRankingType = 'normal'; // 'normal' or 'event'
+        
+        document.querySelectorAll('.ranking-type-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // アクティブ状態を切り替え
+                document.querySelectorAll('.ranking-type-btn').forEach(b => {
+                    b.style.background = 'rgba(210, 105, 30, 0.3)';
+                    b.style.color = '#8B4513';
+                    b.style.border = '2px solid #D2691E';
+                });
+                btn.style.background = '#D2691E';
+                btn.style.color = 'white';
+                btn.style.border = 'none';
+                
+                // タイプを変更
+                currentRankingType = btn.dataset.type;
+                
+                // ランキングを読み込み
+                const activeMode = document.querySelector('.ranking-mode-btn.active');
+                const mode = activeMode ? activeMode.dataset.mode : 'normal';
+                loadRankings(mode, currentRankingType === 'event');
+            });
+        });
+
+        // モード切り替えボタン
+        document.querySelectorAll('.ranking-mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // アクティブ状態を切り替え
+                document.querySelectorAll('.ranking-mode-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // ランキングを読み込み
+                const mode = btn.dataset.mode;
+                loadRankings(mode, currentRankingType === 'event');
+            });
+        });
+
+        // 更新ボタン
+        document.getElementById('refreshRanking').addEventListener('click', () => {
+            const activeBtn = document.querySelector('.ranking-mode-btn.active');
+            const mode = activeBtn ? activeBtn.dataset.mode : 'normal';
+            loadRankings(mode, currentRankingType === 'event');
+        });
+
+        // ハイスコアをランキングに反映
+        document.getElementById('syncToRanking').addEventListener('click', async () => {
+            const btn = document.getElementById('syncToRanking');
+            btn.disabled = true;
+            btn.textContent = '送信中...';
+            
+            const playerName = localStorage.getItem('watermelonPlayerName') || '名無し';
+            const modes = ['normal', 'easy', 'reze', 'gojo'];
+            let successCount = 0;
+            
+            for (const mode of modes) {
+                const score = getBestScore(mode);
+                if (score > 0) {
+                    const success = await submitScore(mode, playerName, score);
+                    if (success) successCount++;
+                }
+            }
+            
+            btn.disabled = false;
+            btn.textContent = `✅ ${successCount}件送信完了`;
+            setTimeout(() => {
+                btn.textContent = '🏆 ランキングに反映';
+            }, 2000);
+        });
+
+        // ランキングデータを読み込む
+        async function loadRankings(mode, isEvent = false) {
+            const rankingList = document.getElementById('rankingList');
+            rankingList.innerHTML = '<div class="loading">読み込み中...</div>';
+            
+            try {
+                const url = isEvent 
+                    ? `${RANKING_API_URL}?mode=${mode}&event=true`
+                    : `${RANKING_API_URL}?mode=${mode}`;
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.success && data.rankings) {
+                    if (isEvent && data.eventActive === false) {
+                        rankingList.innerHTML = '<div class="loading">イベント時間外です<br>（毎日22:00〜02:00）</div>';
+                    } else {
+                        displayRankings(data.rankings);
+                    }
+                } else {
+                    rankingList.innerHTML = '<div class="error">ランキングの読み込みに失敗しました</div>';
+                }
+            } catch (error) {
+                console.error('Ranking load error:', error);
+                rankingList.innerHTML = '<div class="error">ネットワークエラーが発生しました</div>';
+            }
+        }
+
+        // ランキングを表示
+        function displayRankings(rankings) {
+            const rankingList = document.getElementById('rankingList');
+            
+            let html = '';
+            
+            // 1位～10位まで必ず枠を表示
+            for (let rank = 1; rank <= 10; rank++) {
+                const item = rankings.find(r => r.rank === rank);
+                const isTop3 = rank <= 3;
+                const rankEmoji = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '';
+                
+                if (item) {
+                    // データがある場合
+                    html += `
+                        <div class="ranking-item ${isTop3 ? 'top3' : ''}">
+                            <div class="ranking-rank">${rankEmoji}${rank}</div>
+                            <div class="ranking-player">${escapeHtml(item.player || '名無し')}</div>
+                            <div class="ranking-score">${item.score.toLocaleString()}</div>
+                        </div>
+                    `;
+                } else {
+                    // データがない場合は空欄
+                    html += `
+                        <div class="ranking-item">
+                            <div class="ranking-rank">${rankEmoji}${rank}</div>
+                            <div class="ranking-player" style="opacity: 0.3;">---</div>
+                            <div class="ranking-score" style="opacity: 0.3;">---</div>
+                        </div>
+                    `;
+                }
+            }
+            
+            rankingList.innerHTML = html;
+        }
+
+        // スコアを送信
+        async function submitScore(mode, playerName, score) {
+            try {
+                const response = await fetch(RANKING_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        mode: mode,
+                        player: playerName || '名無し',
+                        score: score,
+                        deviceId: DEVICE_ID
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('Score submitted:', data);
+                return data.success;
+            } catch (error) {
+                console.error('Score submission error:', error);
+                return false;
+            }
+        }
+
+        // HTMLエスケープ（XSS対策）
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
