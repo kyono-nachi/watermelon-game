@@ -842,7 +842,7 @@
             width: 100%;
             background: rgba(255, 248, 230, 0.95);
             border-radius: 10px;
-            padding: 6px;
+            padding: 3px 6px;
             box-shadow: 0 4px 15px rgba(139, 69, 19, 0.3);
             border: 3px solid rgba(255, 255, 255, 0.5);
             flex-shrink: 1;
@@ -868,10 +868,10 @@
         }
 
         #sinkaBar h3 {
-            font-size: 12px;
+            font-size: 11px;
             color: #8B4513;
             text-align: center;
-            margin-bottom: 3px;
+            margin-bottom: 2px;
             font-weight: bold;
             position: relative;
             z-index: 1;
@@ -1042,19 +1042,6 @@
             #gameRestartButton {
                 padding: 6px 12px;
                 font-size: 12px;
-            }
-            
-            /* タップ操作安全ゾーンをモバイルで2倍 */
-            #tapSafeZone {
-                height: 180px;
-                font-size: 11px;
-            }
-            
-            /* シンカの棒をさらに小さく表示（0.8倍） */
-            #sinkaBar {
-                padding: 3.2px;
-                border-radius: 6px;
-                transform: scaleY(0.8);
             }
             
             #sinkaBar h3 {
@@ -2464,7 +2451,28 @@
                 const newX = Math.max(WALL_T + radius, Math.min(WIDTH - WALL_T - radius, mouseX));
                 Body.setPosition(currentBall, { x: newX, y: currentBall.position.y });
             }
+        }, { passive: false });
+        
+        // タップ移動エリアでクリックしてボールを落とす
+        tapSafeZone.addEventListener('click', (e) => {
+            if (isGameOver || !canPut) return;
+            if (!currentBall) {
+                createNewBall();
+            } else {
+                dropBall();
+            }
         });
+        
+        // タップ移動エリアでタッチ終了時にボールを落とす
+        tapSafeZone.addEventListener('touchend', (e) => {
+            if (isGameOver || !canPut) return;
+            e.preventDefault();
+            if (!currentBall) {
+                createNewBall();
+            } else {
+                dropBall();
+            }
+        }, { passive: false });
         
         canvas.addEventListener('click', (e) => {
             if (isGameOver) return;
